@@ -1,1 +1,27 @@
 @import "tailwindcss";
+
+@keyframes banner-fall-out {
+  to {
+    transform: translateY(1.75rem);
+    opacity: 0;
+  }
+}
+
+@keyframes banner-fall-in {
+  from {
+    transform: translateY(-1.75rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.banner-fall-out {
+  animation: banner-fall-out 0.45s ease-in forwards;
+}
+
+.banner-fall-in {
+  animation: banner-fall-in 0.45s ease-out forwards;
+}

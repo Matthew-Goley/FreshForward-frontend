@@ -2,7 +2,10 @@ import { useEffect, useRef, useState, type ReactNode, type SVGProps } from 'reac
 
 /* ─── Types ─── */
 
-const DELIVERY_ADDRESS_KEY = 'ff-delivery-address'
+interface SavedAddress {
+  id: string
+  full: string
+}
 
 interface Product {
   id: string
@@ -48,11 +51,12 @@ function IconGrocery(props: SVGProps<SVGSVGElement>) {
   )
 }
 
-function IconProduce(props: SVGProps<SVGSVGElement>) {
+function IconVegan(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} {...props}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 21c4-3 7-6.5 7-11a7 7 0 1 0-14 0c0 4.5 3 8 7 11Z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v4M10 12h4" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 21c-4-2-7-6-7-10a7 7 0 0 1 14 0c0 4-3 8-7 10Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 11V7" />
+      <path strokeLinecap="round" d="M10 9h4" />
     </svg>
   )
 }
@@ -97,15 +101,6 @@ function IconDeals(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} {...props}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 3 14.5 8.5 20.5 9.3 16 13.4 17.2 19.4 12 16.6 6.8 19.4 8 13.4 3.5 9.3 9.5 8.5 12 3Z" />
-    </svg>
-  )
-}
-
-function IconElectronics(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} {...props}>
-      <rect x="5" y="3" width="14" height="18" rx="2" />
-      <circle cx="12" cy="17" r="1" fill="currentColor" stroke="none" />
     </svg>
   )
 }
@@ -189,6 +184,14 @@ function IconPlus(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+function IconX(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} {...props}>
+      <path strokeLinecap="round" d="m18 6-12 12M6 6l12 12" />
+    </svg>
+  )
+}
+
 function IconMenu(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} {...props}>
@@ -197,34 +200,187 @@ function IconMenu(props: SVGProps<SVGSVGElement>) {
   )
 }
 
-function HeroBanner() {
+function BannerUtensilArt() {
   return (
-    <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-500 px-6 py-10 sm:px-10 sm:py-14 lg:px-14 lg:py-16">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-white/10 sm:h-56 sm:w-56"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-12 right-1/4 h-32 w-32 rounded-full bg-white/10 sm:h-44 sm:w-44"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute bottom-8 right-8 hidden h-24 w-24 rotate-12 rounded-2xl bg-white/10 sm:block"
-      />
-      <h1 className="relative max-w-2xl text-3xl font-bold leading-snug tracking-tight text-white sm:text-4xl lg:text-5xl">
+    <div aria-hidden className="flex h-28 w-72 shrink-0 items-center justify-center md:h-32 md:w-80">
+      <svg viewBox="0 0 300 150" className="h-full w-full text-white" fill="none">
+        <g transform="translate(150 78) rotate(4)">
+          <circle cx="0" cy="0" r="46" fill="currentColor" fillOpacity={0.18} stroke="currentColor" strokeWidth={4} />
+          <circle cx="0" cy="0" r="34" stroke="currentColor" strokeOpacity={0.45} strokeWidth={2.5} />
+        </g>
+        <g stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" transform="translate(42 72) rotate(-22)">
+          <path strokeWidth={4} d="M-10 -42v32M2 -42v32M14 -42v32" />
+          <path strokeWidth={5} d="M2 -10v88" />
+        </g>
+        <g stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" transform="translate(258 72) rotate(22)">
+          <ellipse cx="0" cy="-38" rx="16" ry="22" fill="currentColor" fillOpacity={0.22} strokeWidth={4} />
+          <path strokeWidth={5} d="M0 -16v88" />
+        </g>
+      </svg>
+    </div>
+  )
+}
+
+function BannerMissionArt() {
+  const beltY = 132
+  const packageW = 28
+  const packageH = 20
+  const packageY = beltY - packageH
+  const beltStart = 40
+  const beltEnd = 260
+  const gap = (beltEnd - beltStart - 4 * packageW) / 3
+  const packageXs = [0, 1, 2, 3].map((i) => beltStart + i * (packageW + gap))
+
+  return (
+    <div aria-hidden className="flex h-28 w-72 shrink-0 items-center justify-center md:h-32 md:w-80">
+      <svg viewBox="0 0 300 160" className="h-full w-full text-white" fill="none">
+        {/* Clock */}
+        <circle cx="150" cy="42" r="36" fill="currentColor" fillOpacity={0.15} stroke="currentColor" strokeWidth={3.5} />
+        <circle cx="150" cy="42" r="3.5" fill="currentColor" />
+        <line x1="150" y1="42" x2="150" y2="20" stroke="currentColor" strokeWidth={3} strokeLinecap="round" />
+        <line x1="150" y1="42" x2="172" y2="52" stroke="currentColor" strokeWidth={4} strokeLinecap="round" />
+
+        {/* Conveyor belt */}
+        <line x1={beltStart} y1={beltY} x2={beltEnd} y2={beltY} stroke="currentColor" strokeWidth={3} strokeLinecap="round" />
+        <line x1="50" y1="140" x2="250" y2="140" stroke="currentColor" strokeOpacity={0.4} strokeWidth={2} />
+
+        {/* Static packages on belt */}
+        {packageXs.map((x) => (
+          <rect
+            key={x}
+            x={x}
+            y={packageY}
+            width={packageW}
+            height={packageH}
+            rx="3"
+            fill="currentColor"
+            fillOpacity={0.25}
+            stroke="currentColor"
+            strokeWidth={2.5}
+          />
+        ))}
+      </svg>
+    </div>
+  )
+}
+
+interface BannerSlide {
+  id: string
+  text: ReactNode
+  art: ReactNode
+}
+
+const bannerSlides: BannerSlide[] = [
+  {
+    id: 'value',
+    text: (
+      <h1 className="max-w-xl text-2xl font-bold leading-snug tracking-tight text-white sm:max-w-2xl sm:text-3xl lg:text-4xl">
         Eat{' '}
-        <span className="font-['Dancing_Script',cursive] text-5xl font-bold text-emerald-100 sm:text-6xl lg:text-7xl">
+        <span className="font-['Dancing_Script',cursive] text-4xl font-bold text-emerald-100 sm:text-5xl lg:text-6xl">
           great
         </span>{' '}
         food.
         <br />
         Pay a{' '}
-        <span className="font-['Dancing_Script',cursive] text-5xl font-bold text-emerald-100 sm:text-6xl lg:text-7xl">
+        <span className="font-['Dancing_Script',cursive] text-4xl font-bold text-emerald-100 sm:text-5xl lg:text-6xl">
           fraction
         </span>{' '}
         of the price.
       </h1>
+    ),
+    art: <BannerUtensilArt />,
+  },
+  {
+    id: 'mission',
+    text: (
+      <h1 className="max-w-xl text-2xl font-bold leading-snug tracking-tight text-white sm:max-w-2xl sm:text-3xl lg:text-4xl">
+        Our mission is to rescue{' '}
+        <span className="font-['Dancing_Script',cursive] text-4xl font-bold text-emerald-100 sm:text-5xl lg:text-6xl">
+          delicious
+        </span>{' '}
+        food before time runs out.
+      </h1>
+    ),
+    art: <BannerMissionArt />,
+  },
+]
+
+function HeroBanner() {
+  const [activeSlide, setActiveSlide] = useState(0)
+  const [animPhase, setAnimPhase] = useState<'idle' | 'out' | 'in'>('idle')
+
+  const changeSlide = (direction: 1 | -1) => {
+    if (animPhase !== 'idle') return
+    setAnimPhase('out')
+    window.setTimeout(() => {
+      setActiveSlide((i) => (i + direction + bannerSlides.length) % bannerSlides.length)
+      setAnimPhase('in')
+      window.setTimeout(() => setAnimPhase('idle'), 450)
+    }, 450)
+  }
+
+  const goToSlide = (index: number) => {
+    if (animPhase !== 'idle' || index === activeSlide) return
+    setAnimPhase('out')
+    window.setTimeout(() => {
+      setActiveSlide(index)
+      setAnimPhase('in')
+      window.setTimeout(() => setAnimPhase('idle'), 450)
+    }, 450)
+  }
+
+  const slide = bannerSlides[activeSlide]
+  const animClass = animPhase === 'out' ? 'banner-fall-out' : animPhase === 'in' ? 'banner-fall-in' : ''
+
+  return (
+    <section className="relative w-full overflow-hidden bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-500">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -left-16 -top-16 h-40 w-40 rounded-full bg-white/10"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-16 right-1/3 h-32 w-32 rounded-full bg-white/10"
+      />
+
+      <button
+        type="button"
+        aria-label="Previous banner"
+        onClick={() => changeSlide(-1)}
+        className="absolute left-2 top-1/2 z-10 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full bg-white/20 text-white backdrop-blur hover:bg-white/30 sm:left-4"
+      >
+        <IconChevronLeft className="h-5 w-5" />
+      </button>
+      <button
+        type="button"
+        aria-label="Next banner"
+        onClick={() => changeSlide(1)}
+        className="absolute right-2 top-1/2 z-10 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full bg-white/20 text-white backdrop-blur hover:bg-white/30 sm:right-4"
+      >
+        <IconChevronRight className="h-5 w-5" />
+      </button>
+
+      <div className="relative mx-auto flex max-w-7xl items-center justify-between gap-8 px-12 py-7 pb-10 sm:px-14 sm:py-9 sm:pb-11 lg:px-16 lg:py-10 lg:pb-12">
+        <div className={`min-h-[5.5rem] flex-1 sm:min-h-[6.5rem] lg:min-h-[7rem] ${animClass}`}>
+          {slide.text}
+        </div>
+        <div className={`hidden shrink-0 sm:block ${animClass}`}>{slide.art}</div>
+      </div>
+
+      <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-2">
+        {bannerSlides.map((s, i) => (
+          <button
+            key={s.id}
+            type="button"
+            aria-label={`Go to banner ${i + 1}`}
+            aria-current={i === activeSlide ? 'true' : undefined}
+            onClick={() => goToSlide(i)}
+            className={`h-2 w-2 rounded-full transition ${
+              i === activeSlide ? 'bg-white' : 'bg-white/40 hover:bg-white/65'
+            }`}
+          />
+        ))}
+      </div>
     </section>
   )
 }
@@ -234,24 +390,32 @@ function HeroBanner() {
 const sidebarItems: SidebarItem[] = [
   { id: 'home', label: 'Home', icon: IconHome },
   { id: 'grocery', label: 'Grocery', icon: IconGrocery },
-  { id: 'produce', label: 'Fresh Produce', icon: IconProduce },
+  { id: 'vegan', label: 'Vegan', icon: IconVegan },
   { id: 'dairy', label: 'Dairy & Eggs', icon: IconDairy },
   { id: 'meat', label: 'Meat & Seafood', icon: IconMeat },
   { id: 'bakery', label: 'Bakery', icon: IconBakery },
   { id: 'meals', label: 'Prepared Meals', icon: IconMeals },
   { id: 'deals', label: 'Deals', icon: IconDeals },
-  { id: 'electronics', label: 'Electronics', icon: IconElectronics },
 ]
 
 const pills: Pill[] = [
-  { id: 'pizza', emoji: '🍕', label: 'Pizza' },
-  { id: 'sushi', emoji: '🍣', label: 'Sushi' },
-  { id: 'healthy', emoji: '🥦', label: 'Healthy' },
+  { id: 'flash-deals', emoji: '🔥', label: 'Flash Deals' },
+  { id: 'grocery', emoji: '🛒', label: 'Grocery' },
+  { id: 'convenience', emoji: '🏪', label: 'Convenience' },
   { id: 'burgers', emoji: '🍔', label: 'Burgers' },
-  { id: 'drinks', emoji: '🥤', label: 'Drinks' },
-  { id: 'berries', emoji: '🍓', label: 'Berries' },
-  { id: 'desserts', emoji: '🍰', label: 'Desserts' },
-  { id: 'coffee', emoji: '☕', label: 'Coffee' },
+  { id: 'pizza', emoji: '🍕', label: 'Pizza' },
+  { id: 'wings', emoji: '🍗', label: 'Wings' },
+  { id: 'sandwiches', emoji: '🥪', label: 'Sandwiches & Delis' },
+  { id: 'sushi', emoji: '🍣', label: 'Sushi' },
+  { id: 'mexican', emoji: '🌮', label: 'Mexican' },
+  { id: 'chinese', emoji: '🥡', label: 'Chinese' },
+  { id: 'thai', emoji: '🍜', label: 'Thai' },
+  { id: 'italian', emoji: '🍝', label: 'Italian' },
+  { id: 'indian', emoji: '🍛', label: 'Indian' },
+  { id: 'mediterranean', emoji: '🥙', label: 'Mediterranean' },
+  { id: 'breakfast', emoji: '🥞', label: 'Breakfast & Brunch' },
+  { id: 'coffee-tea', emoji: '☕', label: 'Coffee & Tea' },
+  { id: 'bakery-desserts', emoji: '🍰', label: 'Bakery & Desserts' },
 ]
 
 const todaysOffers: Product[] = [
@@ -407,6 +571,8 @@ const preparedMeals: Product[] = [
 const hideScrollbar =
   '[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
 
+const textButtonHover = 'hover:bg-gray-300'
+
 async function reverseGeocode(lat: number, lon: number): Promise<string> {
   const res = await fetch(
     `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
@@ -545,6 +711,66 @@ function ProductCard({ product, onAdd }: { product: Product; onAdd: (id: string)
   )
 }
 
+function CategoryPills({
+  pills,
+  activePill,
+  onSelect,
+}: {
+  pills: Pill[]
+  activePill: string | null
+  onSelect: (id: string | null) => void
+}) {
+  const trackRef = useRef<HTMLDivElement>(null)
+
+  const scroll = (dir: -1 | 1) => {
+    trackRef.current?.scrollBy({ left: dir * 280, behavior: 'smooth' })
+  }
+
+  const arrowBtnClass =
+    'grid h-9 w-9 shrink-0 place-items-center rounded-full border border-gray-200 bg-white text-slate-600 shadow-sm hover:bg-gray-300'
+
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        aria-label="Scroll categories left"
+        onClick={() => scroll(-1)}
+        className={arrowBtnClass}
+      >
+        <IconChevronLeft className="h-4 w-4" />
+      </button>
+      <div ref={trackRef} className={`flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1 ${hideScrollbar}`}>
+        {pills.map((pill) => {
+          const selected = activePill === pill.id
+          return (
+            <button
+              key={pill.id}
+              type="button"
+              onClick={() => onSelect(selected ? null : pill.id)}
+              className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium ${
+                selected
+                  ? 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200'
+                  : 'bg-gray-100 text-slate-700 hover:bg-gray-300'
+              }`}
+            >
+              <span aria-hidden>{pill.emoji}</span>
+              {pill.label}
+            </button>
+          )
+        })}
+      </div>
+      <button
+        type="button"
+        aria-label="Scroll categories right"
+        onClick={() => scroll(1)}
+        className={arrowBtnClass}
+      >
+        <IconChevronRight className="h-4 w-4" />
+      </button>
+    </div>
+  )
+}
+
 function ProductRow({
   title,
   products,
@@ -567,7 +793,7 @@ function ProductRow({
         <div className="flex items-center gap-2">
           <button
             type="button"
-            className="text-sm font-semibold text-emerald-700 hover:text-emerald-800"
+            className={`rounded-lg px-2 py-1 text-sm font-semibold text-emerald-700 hover:text-emerald-800 ${textButtonHover}`}
           >
             See All
           </button>
@@ -575,7 +801,7 @@ function ProductRow({
             type="button"
             aria-label={`Scroll ${title} left`}
             onClick={() => scroll(-1)}
-            className="grid h-8 w-8 place-items-center rounded-full border border-gray-100 text-slate-600 hover:bg-gray-50"
+            className="grid h-8 w-8 place-items-center rounded-full border border-gray-100 text-slate-600 hover:bg-gray-300"
           >
             <IconChevronLeft className="h-4 w-4" />
           </button>
@@ -583,7 +809,7 @@ function ProductRow({
             type="button"
             aria-label={`Scroll ${title} right`}
             onClick={() => scroll(1)}
-            className="grid h-8 w-8 place-items-center rounded-full border border-gray-100 text-slate-600 hover:bg-gray-50"
+            className="grid h-8 w-8 place-items-center rounded-full border border-gray-100 text-slate-600 hover:bg-gray-300"
           >
             <IconChevronRight className="h-4 w-4" />
           </button>
@@ -600,6 +826,7 @@ function ProductRow({
 
 function AddressDropdown({
   address,
+  savedAddresses,
   currentLocation,
   open,
   mode,
@@ -612,10 +839,13 @@ function AddressDropdown({
   onDraftChange,
   onSetMode,
   onSelectSuggestion,
+  onSelectSaved,
+  onRemoveSaved,
   onManualSave,
   onUseLocation,
 }: {
   address: string
+  savedAddresses: SavedAddress[]
   currentLocation: string
   open: boolean
   mode: 'search' | 'manual'
@@ -628,6 +858,8 @@ function AddressDropdown({
   onDraftChange: (v: string) => void
   onSetMode: (mode: 'search' | 'manual') => void
   onSelectSuggestion: (suggestion: AddressSuggestion) => void
+  onSelectSaved: (full: string) => void
+  onRemoveSaved: (id: string) => void
   onManualSave: () => void
   onUseLocation: () => void
 }) {
@@ -658,7 +890,7 @@ function AddressDropdown({
       <button
         type="button"
         onClick={onToggle}
-        className="flex max-w-[10rem] items-center gap-1 overflow-hidden rounded-full border border-gray-100 px-3 py-2 text-sm hover:bg-gray-50 md:max-w-[14rem]"
+        className={`flex max-w-[10rem] items-center gap-1 overflow-hidden rounded-full border border-gray-100 px-3 py-2 text-sm md:max-w-[14rem] ${textButtonHover}`}
       >
         <IconPin className="h-4 w-4 shrink-0 text-slate-500" />
         {displayAddress ? (
@@ -694,7 +926,7 @@ function AddressDropdown({
                   <button
                     type="button"
                     onClick={() => onSetMode('search')}
-                    className="rounded-lg px-3 py-1.5 text-sm text-slate-600 hover:bg-gray-50"
+                    className={`rounded-lg px-3 py-1.5 text-sm text-slate-600 ${textButtonHover}`}
                   >
                     Back
                   </button>
@@ -736,7 +968,7 @@ function AddressDropdown({
                       key={s.id}
                       type="button"
                       onClick={() => onSelectSuggestion(s)}
-                      className="flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-left hover:bg-gray-50"
+                      className={`flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-left ${textButtonHover}`}
                     >
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-semibold text-slate-900">{s.primary}</p>
@@ -748,10 +980,47 @@ function AddressDropdown({
                     </button>
                   ))}
 
+                  {savedAddresses.map((saved) => {
+                    const selected = address === saved.full
+                    const secondary = saved.full.split(',').slice(1).join(',').trim()
+                    return (
+                      <div
+                        key={saved.id}
+                        className={`flex items-center gap-1 border-b border-gray-100 ${
+                          selected ? 'bg-emerald-50' : ''
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => onSelectSaved(saved.full)}
+                          className={`flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left ${textButtonHover}`}
+                        >
+                          <IconPin className="h-4 w-4 shrink-0 text-slate-500" />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-semibold text-slate-900">
+                              {formatAddressShort(saved.full)}
+                            </p>
+                            {secondary && (
+                              <p className="truncate text-sm text-slate-500">{secondary}</p>
+                            )}
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Remove ${formatAddressShort(saved.full)}`}
+                          onClick={() => onRemoveSaved(saved.id)}
+                          className={`mr-3 grid h-8 w-8 shrink-0 place-items-center rounded-full text-slate-400 hover:text-slate-600 ${textButtonHover}`}
+                        >
+                          <IconX className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )
+                  })}
+
                   <button
                     type="button"
                     onClick={() => onSetMode('manual')}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-gray-50"
+                    className={`flex w-full items-center gap-3 px-4 py-3 text-left ${textButtonHover}`}
                   >
                     <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-gray-200 text-slate-600">
                       <IconPlus className="h-4 w-4" />
@@ -766,7 +1035,7 @@ function AddressDropdown({
                 <div className="border-t border-gray-100 px-4 py-3">
                   <button
                     type="button"
-                    className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-gray-50"
+                    className={`flex w-full items-center justify-center gap-2 rounded-full border border-gray-200 px-4 py-2.5 text-sm font-medium text-slate-700 ${textButtonHover}`}
                   >
                     <IconUser className="h-4 w-4" />
                     Sign in for saved address
@@ -777,7 +1046,7 @@ function AddressDropdown({
                   type="button"
                   onClick={onUseLocation}
                   disabled={locationLoading}
-                  className="flex w-full items-start gap-3 border-t border-gray-100 px-4 py-3 text-left hover:bg-gray-50 disabled:opacity-60"
+                  className={`flex w-full items-start gap-3 border-t border-gray-100 px-4 py-3 text-left disabled:opacity-60 ${textButtonHover}`}
                 >
                   <IconGpsTarget className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
                   <div className="min-w-0">
@@ -813,9 +1082,8 @@ function AddressDropdown({
 
 export default function Browse() {
   const [cartCount, setCartCount] = useState(0)
-  const [deliveryAddress, setDeliveryAddress] = useState(
-    () => localStorage.getItem(DELIVERY_ADDRESS_KEY) ?? '',
-  )
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([])
+  const [deliveryAddress, setDeliveryAddress] = useState('')
   const [locationLoading, setLocationLoading] = useState(false)
   const [addressDropdownOpen, setAddressDropdownOpen] = useState(false)
   const [addressPanelMode, setAddressPanelMode] = useState<'search' | 'manual'>('search')
@@ -848,8 +1116,14 @@ export default function Browse() {
   }
 
   const saveAddress = (address: string, pendingId: string | null = pendingProductId) => {
-    setDeliveryAddress(address)
-    localStorage.setItem(DELIVERY_ADDRESS_KEY, address)
+    const trimmed = address.trim()
+    if (!trimmed) return
+
+    setSavedAddresses((prev) => {
+      if (prev.some((a) => a.full === trimmed)) return prev
+      return [...prev, { id: crypto.randomUUID(), full: trimmed }]
+    })
+    setDeliveryAddress(trimmed)
     setAddressDropdownOpen(false)
     setAddressPanelMode('search')
     setAddressDraft('')
@@ -858,6 +1132,25 @@ export default function Browse() {
       setCartCount((c) => c + 1)
       setPendingProductId(null)
     }
+  }
+
+  const selectAddress = (address: string) => {
+    setDeliveryAddress(address)
+    setAddressDropdownOpen(false)
+    setAddressPanelMode('search')
+    setAddressDraft('')
+    setAddressSuggestions([])
+  }
+
+  const removeAddress = (id: string) => {
+    setSavedAddresses((prev) => {
+      const removed = prev.find((a) => a.id === id)
+      const next = prev.filter((a) => a.id !== id)
+      if (removed && removed.full === deliveryAddress) {
+        setDeliveryAddress(next[0]?.full ?? '')
+      }
+      return next
+    })
   }
 
   const openAddressDropdown = () => {
@@ -931,7 +1224,7 @@ export default function Browse() {
             type="button"
             aria-label="Toggle food categories"
             aria-expanded={sidebarOpen}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-gray-100 text-slate-600 hover:bg-gray-50"
+            className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-gray-100 text-slate-600 ${textButtonHover}`}
             onClick={() => setSidebarOpen((o) => !o)}
           >
             <IconMenu className="h-5 w-5" />
@@ -949,6 +1242,7 @@ export default function Browse() {
           <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
             <AddressDropdown
               address={deliveryAddress}
+              savedAddresses={savedAddresses}
               currentLocation={currentLocation}
               open={addressDropdownOpen}
               mode={addressPanelMode}
@@ -961,13 +1255,15 @@ export default function Browse() {
               onDraftChange={handleAddressDraftChange}
               onSetMode={setAddressPanelMode}
               onSelectSuggestion={handleSelectSuggestion}
+              onSelectSaved={selectAddress}
+              onRemoveSaved={removeAddress}
               onManualSave={handleManualSave}
               onUseLocation={handleUseCurrentLocation}
             />
-            <button type="button" className="hidden text-sm font-medium text-slate-600 hover:text-slate-900 sm:inline">
+            <button type="button" className={`hidden rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 sm:inline ${textButtonHover}`}>
               Sign In
             </button>
-            <button type="button" className="hidden text-sm font-medium text-slate-600 hover:text-slate-900 sm:inline">
+            <button type="button" className={`hidden rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 sm:inline ${textButtonHover}`}>
               Sign Up
             </button>
             <button
@@ -981,6 +1277,8 @@ export default function Browse() {
           </div>
         </div>
       </header>
+
+      <HeroBanner />
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* Sidebar — pushes content instead of overlapping */}
@@ -997,14 +1295,11 @@ export default function Browse() {
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => {
-                    setActiveSidebar(item.id)
-                    setSidebarOpen(false)
-                  }}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition ${
+                  onClick={() => setActiveSidebar(item.id)}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium ${
                     active
                       ? 'bg-emerald-50 text-emerald-700'
-                      : 'text-slate-700 hover:bg-gray-50'
+                      : `text-slate-700 ${textButtonHover}`
                   }`}
                 >
                   <Icon className={`h-5 w-5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-500'}`} />
@@ -1018,29 +1313,11 @@ export default function Browse() {
         {/* Main content */}
         <main className="min-w-0 flex-1 overflow-y-auto transition-[margin] duration-200 ease-in-out">
           <div className="px-4 py-5 sm:px-6 lg:px-8">
-            <HeroBanner />
-
-            {/* Category pills */}
-            <div className={`mt-6 flex gap-2 overflow-x-auto pb-1 ${hideScrollbar}`}>
-              {pills.map((pill) => {
-                const selected = activePill === pill.id
-                return (
-                  <button
-                    key={pill.id}
-                    type="button"
-                    onClick={() => setActivePill(selected ? null : pill.id)}
-                    className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${
-                      selected
-                        ? 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200'
-                        : 'bg-gray-100 text-slate-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    <span aria-hidden>{pill.emoji}</span>
-                    {pill.label}
-                  </button>
-                )
-              })}
-            </div>
+            <CategoryPills
+              pills={pills}
+              activePill={activePill}
+              onSelect={setActivePill}
+            />
 
             <ProductRow title="Today's Offers" products={todaysOffers} onAdd={handleAddToCart} />
             <ProductRow title="Prepared Meals" products={preparedMeals} onAdd={handleAddToCart} />
