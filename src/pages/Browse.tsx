@@ -17,14 +17,6 @@ interface Product {
   imageUrl: string
 }
 
-interface PromoSlide {
-  id: string
-  headline: string
-  subtext: string
-  cta: string
-  gradient: string
-}
-
 interface SidebarItem {
   id: string
   label: string
@@ -205,6 +197,38 @@ function IconMenu(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+function HeroBanner() {
+  return (
+    <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-500 px-6 py-10 sm:px-10 sm:py-14 lg:px-14 lg:py-16">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-white/10 sm:h-56 sm:w-56"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-12 right-1/4 h-32 w-32 rounded-full bg-white/10 sm:h-44 sm:w-44"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute bottom-8 right-8 hidden h-24 w-24 rotate-12 rounded-2xl bg-white/10 sm:block"
+      />
+      <h1 className="relative max-w-2xl text-3xl font-bold leading-snug tracking-tight text-white sm:text-4xl lg:text-5xl">
+        Eat{' '}
+        <span className="font-['Dancing_Script',cursive] text-5xl font-bold text-emerald-100 sm:text-6xl lg:text-7xl">
+          great
+        </span>{' '}
+        food.
+        <br />
+        Pay a{' '}
+        <span className="font-['Dancing_Script',cursive] text-5xl font-bold text-emerald-100 sm:text-6xl lg:text-7xl">
+          fraction
+        </span>{' '}
+        of the price.
+      </h1>
+    </section>
+  )
+}
+
 /* ─── Mock data ─── */
 
 const sidebarItems: SidebarItem[] = [
@@ -228,30 +252,6 @@ const pills: Pill[] = [
   { id: 'berries', emoji: '🍓', label: 'Berries' },
   { id: 'desserts', emoji: '🍰', label: 'Desserts' },
   { id: 'coffee', emoji: '☕', label: 'Coffee' },
-]
-
-const promoSlides: PromoSlide[] = [
-  {
-    id: 'summer',
-    headline: 'Fresh Summer Savings',
-    subtext: 'Up to 40% off seasonal produce and prepared meals near you.',
-    cta: 'Shop deals',
-    gradient: 'from-emerald-500 to-teal-600',
-  },
-  {
-    id: 'delivery',
-    headline: 'Sign up for $0 Delivery Fees',
-    subtext: 'New members get free delivery on their first three orders.',
-    cta: 'Order now',
-    gradient: 'from-teal-500 to-cyan-600',
-  },
-  {
-    id: 'local',
-    headline: 'Support Local Kitchens',
-    subtext: 'Discover surplus meals from restaurants within MAARA.',
-    cta: 'Explore',
-    gradient: 'from-green-600 to-emerald-700',
-  },
 ]
 
 const todaysOffers: Product[] = [
@@ -826,8 +826,7 @@ export default function Browse() {
   const [pendingProductId, setPendingProductId] = useState<string | null>(null)
   const [activeSidebar, setActiveSidebar] = useState('home')
   const [activePill, setActivePill] = useState<string | null>(null)
-  const [activePromo, setActivePromo] = useState(0)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
   const searchTimerRef = useRef<number | null>(null)
 
   const handleAddressDraftChange = (value: string) => {
@@ -923,8 +922,6 @@ export default function Browse() {
     }
   }
 
-  const slide = promoSlides[activePromo]
-
   return (
     <div className="flex min-h-screen flex-col bg-white text-slate-800 [&_button]:cursor-pointer">
       {/* Sticky control bar */}
@@ -932,14 +929,15 @@ export default function Browse() {
         <div className="flex items-center gap-3 px-4 py-3 lg:gap-4">
           <button
             type="button"
-            aria-label="Toggle categories"
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-gray-100 text-slate-600 lg:hidden"
+            aria-label="Toggle food categories"
+            aria-expanded={sidebarOpen}
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-gray-100 text-slate-600 hover:bg-gray-50"
             onClick={() => setSidebarOpen((o) => !o)}
           >
             <IconMenu className="h-5 w-5" />
           </button>
 
-          <div className="relative mx-auto min-w-0 flex-1 max-w-2xl">
+          <div className="relative min-w-0 flex-1 max-w-2xl">
             <IconSearch className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="search"
@@ -984,14 +982,14 @@ export default function Browse() {
         </div>
       </header>
 
-      <div className="relative flex min-h-0 flex-1 overflow-hidden">
-        {/* Sidebar */}
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        {/* Sidebar — pushes content instead of overlapping */}
         <aside
-          className={`absolute inset-y-0 left-0 z-20 w-56 shrink-0 overflow-y-auto border-r border-gray-100 bg-white transition-transform lg:static lg:translate-x-0 ${
-            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          className={`h-full shrink-0 overflow-hidden border-gray-100 bg-white transition-[width] duration-200 ease-in-out ${
+            sidebarOpen ? 'w-56 border-r' : 'w-0'
           }`}
         >
-          <nav className="flex flex-col gap-0.5 p-3">
+          <nav className="flex h-full w-56 flex-col gap-0.5 overflow-y-auto p-3">
             {sidebarItems.map((item) => {
               const active = activeSidebar === item.id
               const Icon = item.icon
@@ -1017,20 +1015,13 @@ export default function Browse() {
           </nav>
         </aside>
 
-        {sidebarOpen && (
-          <button
-            type="button"
-            aria-label="Close sidebar"
-            className="absolute inset-0 z-10 bg-slate-900/20 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="min-w-0 flex-1 overflow-y-auto transition-[margin] duration-200 ease-in-out">
           <div className="px-4 py-5 sm:px-6 lg:px-8">
+            <HeroBanner />
+
             {/* Category pills */}
-            <div className={`flex gap-2 overflow-x-auto pb-1 ${hideScrollbar}`}>
+            <div className={`mt-6 flex gap-2 overflow-x-auto pb-1 ${hideScrollbar}`}>
               {pills.map((pill) => {
                 const selected = activePill === pill.id
                 return (
@@ -1049,55 +1040,6 @@ export default function Browse() {
                   </button>
                 )
               })}
-            </div>
-
-            {/* Promo carousel */}
-            <div className="relative mt-6 overflow-hidden rounded-2xl">
-              <div
-                className={`flex min-h-[10rem] flex-col justify-center bg-gradient-to-r ${slide.gradient} px-6 py-8 text-white sm:min-h-[11rem] sm:px-10`}
-              >
-                <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{slide.headline}</h2>
-                <p className="mt-2 max-w-lg text-sm text-white/90 sm:text-base">{slide.subtext}</p>
-                <button
-                  type="button"
-                  className="mt-4 w-fit rounded-full bg-white px-5 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50"
-                >
-                  {slide.cta}
-                </button>
-              </div>
-              <div className="absolute bottom-4 right-4 flex items-center gap-2">
-                <button
-                  type="button"
-                  aria-label="Previous promo"
-                  onClick={() =>
-                    setActivePromo((i) => (i - 1 + promoSlides.length) % promoSlides.length)
-                  }
-                  className="grid h-8 w-8 place-items-center rounded-full bg-white/90 text-slate-700 shadow hover:bg-white"
-                >
-                  <IconChevronLeft className="h-4 w-4" />
-                </button>
-                <div className="flex gap-1.5">
-                  {promoSlides.map((s, i) => (
-                    <button
-                      key={s.id}
-                      type="button"
-                      aria-label={`Go to promo ${i + 1}`}
-                      onClick={() => setActivePromo(i)}
-                      className={`h-2 w-2 rounded-full transition ${
-                        i === activePromo ? 'bg-white' : 'bg-white/50 hover:bg-white/80'
-                      }`}
-                    />
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  aria-label="Next promo"
-                  onClick={() => setActivePromo((i) => (i + 1) % promoSlides.length)}
-                  className="grid h-8 w-8 place-items-center rounded-full bg-white/90 text-slate-700 shadow hover:bg-white"
-                >
-                  <IconChevronRight className="h-4 w-4" />
-                </button>
-              </div>
             </div>
 
             <ProductRow title="Today's Offers" products={todaysOffers} onAdd={handleAddToCart} />
