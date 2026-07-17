@@ -11,9 +11,9 @@ export default function RestaurantApply() {
   const [address, setAddress] = useState('')
   const [description, setDescription] = useState('')
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    submitApplication({ name, contactEmail, address, description })
+    await submitApplication({ name, contactEmail, address, description })
     setSubmitted(true)
   }
 

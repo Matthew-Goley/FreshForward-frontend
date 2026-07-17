@@ -12,9 +12,9 @@ export default function Signup() {
   const [password, setPassword] = useState('')
   const [accountType, setAccountType] = useState<AccountType>('customer')
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const user = signup(email, password, accountType)
+    const user = await signup(email, password, accountType)
     navigate(user.accountType === 'restaurant' ? '/restaurant/dashboard' : '/listings')
   }
 

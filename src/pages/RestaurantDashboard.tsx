@@ -2,8 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useApp } from '../lib/AppContext'
-import type { ListingInput } from '../lib/AppContext'
-import type { Listing } from '../types'
+import type { Listing, ListingInput } from '../types'
 
 interface ListingFormState {
   title: string
@@ -81,7 +80,7 @@ export default function RestaurantDashboard() {
     setShowForm(true)
   }
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const input: ListingInput = {
       title: form.title,
@@ -92,9 +91,9 @@ export default function RestaurantDashboard() {
       pickupWindow: form.pickupWindow,
     }
     if (editingId) {
-      updateListing(editingId, input)
+      await updateListing(editingId, input)
     } else {
-      createListing(input)
+      await createListing(input)
     }
     setShowForm(false)
     setEditingId(null)
@@ -129,7 +128,7 @@ export default function RestaurantDashboard() {
                 <button onClick={() => openEditForm(listing)} className="border border-gray-400 px-2 py-1">
                   Edit
                 </button>
-                <button onClick={() => deleteListing(listing.id)} className="border border-gray-400 px-2 py-1">
+                <button onClick={() => void deleteListing(listing.id)} className="border border-gray-400 px-2 py-1">
                   Delete
                 </button>
               </div>

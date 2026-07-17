@@ -38,3 +38,19 @@ export interface Order {
   price: number
   customerEmail: string
 }
+
+export interface ListingInput {
+  title: string
+  description: string
+  originalPrice: number
+  discountedPrice: number
+  quantityAvailable: number
+  pickupWindow: string
+}
+
+export interface ApplicationInput {
+  name: string
+  contactEmail: string
+  address: string
+  description: string
+}

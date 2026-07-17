@@ -32,8 +32,8 @@ export default function Checkout() {
 
   const listingId = listing.id
 
-  function handleConfirm() {
-    const order = placeOrder(listingId)
+  async function handleConfirm() {
+    const order = await placeOrder(listingId)
     navigate(`/orders/${order.id}`)
   }
 

@@ -12,9 +12,9 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const user = login(email, password)
+    const user = await login(email, password)
     navigate(user.accountType === 'restaurant' ? '/restaurant/dashboard' : redirectTo || '/listings')
   }
 
