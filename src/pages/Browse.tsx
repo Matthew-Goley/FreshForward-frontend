@@ -7,6 +7,16 @@ interface SavedAddress {
   full: string
 }
 
+type SidebarCategoryId = 'grocery' | 'vegan' | 'dairy' | 'meat' | 'bakery' | 'meals' | 'deals'
+
+interface Pill {
+  id: string
+  emoji: string
+  label: string
+}
+
+type PillCategoryId = Pill['id']
+
 interface Product {
   id: string
   title: string
@@ -18,18 +28,21 @@ interface Product {
   deliveryMin: number
   deliveryMax: number
   imageUrl: string
+  sidebarCategory: SidebarCategoryId
+  pillCategories: PillCategoryId[]
+}
+
+interface ProductSection {
+  id: SidebarCategoryId
+  title: string
+  products: Product[]
+  totalCount: number
 }
 
 interface SidebarItem {
   id: string
   label: string
   icon: (props: SVGProps<SVGSVGElement>) => ReactNode
-}
-
-interface Pill {
-  id: string
-  emoji: string
-  label: string
 }
 
 /* ─── Icons ─── */
@@ -418,7 +431,30 @@ const pills: Pill[] = [
   { id: 'bakery-desserts', emoji: '🍰', label: 'Bakery & Desserts' },
 ]
 
-const todaysOffers: Product[] = [
+const SECTION_ORDER: SidebarCategoryId[] = [
+  'deals',
+  'meals',
+  'grocery',
+  'vegan',
+  'dairy',
+  'meat',
+  'bakery',
+]
+
+const INITIAL_ITEMS_PER_SECTION = 4
+const ITEMS_INCREMENT = 4
+
+const sidebarSectionTitles: Record<SidebarCategoryId, string> = {
+  deals: 'Deals',
+  meals: 'Prepared Meals',
+  grocery: 'Grocery',
+  vegan: 'Vegan',
+  dairy: 'Dairy & Eggs',
+  meat: 'Meat & Seafood',
+  bakery: 'Bakery',
+}
+
+const catalogProducts: Product[] = [
   {
     id: 'avocado-berry',
     title: 'Organic Avocado & Berry Box',
@@ -430,6 +466,8 @@ const todaysOffers: Product[] = [
     deliveryMin: 15,
     deliveryMax: 30,
     imageUrl: 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=400&h=400&fit=crop',
+    sidebarCategory: 'deals',
+    pillCategories: ['flash-deals', 'grocery'],
   },
   {
     id: 'brioche-buns',
@@ -442,6 +480,8 @@ const todaysOffers: Product[] = [
     deliveryMin: 20,
     deliveryMax: 35,
     imageUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&h=400&fit=crop',
+    sidebarCategory: 'bakery',
+    pillCategories: ['bakery-desserts', 'burgers'],
   },
   {
     id: 'organic-bananas',
@@ -454,6 +494,8 @@ const todaysOffers: Product[] = [
     deliveryMin: 15,
     deliveryMax: 25,
     imageUrl: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400&h=400&fit=crop',
+    sidebarCategory: 'grocery',
+    pillCategories: ['grocery', 'flash-deals'],
   },
   {
     id: 'fresh-baguette',
@@ -466,6 +508,8 @@ const todaysOffers: Product[] = [
     deliveryMin: 20,
     deliveryMax: 40,
     imageUrl: 'https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=400&h=400&fit=crop',
+    sidebarCategory: 'bakery',
+    pillCategories: ['bakery-desserts', 'italian'],
   },
   {
     id: 'guac-chips',
@@ -477,7 +521,9 @@ const todaysOffers: Product[] = [
     reviewCount: '150+',
     deliveryMin: 10,
     deliveryMax: 25,
-    imageUrl: 'https://images.unsplash.com/photo-1615870216519-2f35ccceb79c?w=400&h=400&fit=crop',
+    imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
+    sidebarCategory: 'deals',
+    pillCategories: ['flash-deals', 'mexican', 'convenience'],
   },
   {
     id: 'mixed-greens',
@@ -490,10 +536,9 @@ const todaysOffers: Product[] = [
     deliveryMin: 15,
     deliveryMax: 30,
     imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=400&fit=crop',
+    sidebarCategory: 'vegan',
+    pillCategories: ['grocery', 'mediterranean'],
   },
-]
-
-const preparedMeals: Product[] = [
   {
     id: 'pepperoni-slice',
     title: 'Pepperoni Slice',
@@ -505,6 +550,8 @@ const preparedMeals: Product[] = [
     deliveryMin: 15,
     deliveryMax: 25,
     imageUrl: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=400&fit=crop',
+    sidebarCategory: 'meals',
+    pillCategories: ['pizza', 'italian', 'flash-deals'],
   },
   {
     id: 'orange-chicken',
@@ -517,6 +564,8 @@ const preparedMeals: Product[] = [
     deliveryMin: 20,
     deliveryMax: 35,
     imageUrl: 'https://images.unsplash.com/photo-1525755662778-989d0524087e?w=400&h=400&fit=crop',
+    sidebarCategory: 'meals',
+    pillCategories: ['chinese', 'flash-deals'],
   },
   {
     id: 'beijing-beef',
@@ -529,6 +578,8 @@ const preparedMeals: Product[] = [
     deliveryMin: 20,
     deliveryMax: 35,
     imageUrl: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=400&h=400&fit=crop',
+    sidebarCategory: 'meals',
+    pillCategories: ['chinese'],
   },
   {
     id: 'sofritas-bowl',
@@ -541,6 +592,8 @@ const preparedMeals: Product[] = [
     deliveryMin: 15,
     deliveryMax: 30,
     imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
+    sidebarCategory: 'vegan',
+    pillCategories: ['mexican', 'flash-deals'],
   },
   {
     id: 'salmon-rice',
@@ -553,6 +606,8 @@ const preparedMeals: Product[] = [
     deliveryMin: 25,
     deliveryMax: 40,
     imageUrl: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&h=400&fit=crop',
+    sidebarCategory: 'meat',
+    pillCategories: ['sushi', 'mediterranean'],
   },
   {
     id: 'veggie-wrap',
@@ -565,13 +620,279 @@ const preparedMeals: Product[] = [
     deliveryMin: 15,
     deliveryMax: 30,
     imageUrl: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=400&h=400&fit=crop',
+    sidebarCategory: 'vegan',
+    pillCategories: ['sandwiches', 'mediterranean'],
+  },
+  {
+    id: 'whole-milk',
+    title: 'Organic Whole Milk',
+    vendor: 'Whole Foods',
+    price: 2.49,
+    originalPrice: 4.99,
+    rating: 4.6,
+    reviewCount: '120+',
+    deliveryMin: 15,
+    deliveryMax: 30,
+    imageUrl: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=400&fit=crop',
+    sidebarCategory: 'dairy',
+    pillCategories: ['grocery', 'breakfast'],
+  },
+  {
+    id: 'free-range-eggs',
+    title: 'Free-Range Eggs (12 ct)',
+    vendor: 'Key Food',
+    price: 3.29,
+    originalPrice: 5.99,
+    rating: 4.7,
+    reviewCount: '85+',
+    deliveryMin: 20,
+    deliveryMax: 35,
+    imageUrl: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=400&fit=crop',
+    sidebarCategory: 'dairy',
+    pillCategories: ['grocery', 'breakfast'],
+  },
+  {
+    id: 'greek-yogurt',
+    title: 'Greek Yogurt Variety Pack',
+    vendor: 'ALDI',
+    price: 4.15,
+    originalPrice: 7.99,
+    rating: 4.5,
+    reviewCount: '70+',
+    deliveryMin: 20,
+    deliveryMax: 35,
+    imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&h=400&fit=crop',
+    sidebarCategory: 'dairy',
+    pillCategories: ['grocery', 'breakfast'],
+  },
+  {
+    id: 'grass-fed-steak',
+    title: 'Grass-Fed Ribeye Steak',
+    vendor: 'Local Butcher Co.',
+    price: 12.99,
+    originalPrice: 24.99,
+    rating: 4.8,
+    reviewCount: '65+',
+    deliveryMin: 25,
+    deliveryMax: 45,
+    imageUrl: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=400&h=400&fit=crop',
+    sidebarCategory: 'meat',
+    pillCategories: ['flash-deals'],
+  },
+  {
+    id: 'wild-shrimp',
+    title: 'Wild Caught Shrimp',
+    vendor: 'Harbor Fish Market',
+    price: 8.49,
+    originalPrice: 15.99,
+    rating: 4.7,
+    reviewCount: '55+',
+    deliveryMin: 20,
+    deliveryMax: 40,
+    imageUrl: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&h=400&fit=crop',
+    sidebarCategory: 'meat',
+    pillCategories: ['flash-deals', 'mediterranean'],
+  },
+  {
+    id: 'sourdough-loaf',
+    title: 'Artisan Sourdough Loaf',
+    vendor: 'Key Food',
+    price: 2.99,
+    originalPrice: 5.49,
+    rating: 4.9,
+    reviewCount: '130+',
+    deliveryMin: 15,
+    deliveryMax: 30,
+    imageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&h=400&fit=crop',
+    sidebarCategory: 'bakery',
+    pillCategories: ['bakery-desserts', 'breakfast'],
+  },
+  {
+    id: 'chocolate-croissant',
+    title: 'Chocolate Croissant',
+    vendor: 'Parisian Bakery',
+    price: 1.75,
+    originalPrice: 3.5,
+    rating: 4.8,
+    reviewCount: '210+',
+    deliveryMin: 10,
+    deliveryMax: 25,
+    imageUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&h=400&fit=crop',
+    sidebarCategory: 'bakery',
+    pillCategories: ['bakery-desserts', 'breakfast', 'coffee-tea'],
+  },
+  {
+    id: 'tofu-stir-fry',
+    title: 'Tofu Stir-Fry Kit',
+    vendor: 'Local Harvest Co.',
+    price: 6.25,
+    originalPrice: 11.99,
+    rating: 4.6,
+    reviewCount: '48+',
+    deliveryMin: 15,
+    deliveryMax: 30,
+    imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=400&fit=crop',
+    sidebarCategory: 'vegan',
+    pillCategories: ['thai', 'chinese'],
+  },
+  {
+    id: 'overnight-oats',
+    title: 'Overnight Oats (3-Pack)',
+    vendor: 'Sweetgreen',
+    price: 7.99,
+    originalPrice: 12.99,
+    rating: 4.5,
+    reviewCount: '92+',
+    deliveryMin: 15,
+    deliveryMax: 30,
+    imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&h=400&fit=crop',
+    sidebarCategory: 'grocery',
+    pillCategories: ['breakfast', 'grocery'],
+  },
+  {
+    id: 'spicy-wings',
+    title: 'Spicy Buffalo Wings',
+    vendor: 'Wing Stop',
+    price: 4.25,
+    originalPrice: 9.99,
+    rating: 4.6,
+    reviewCount: '175+',
+    deliveryMin: 20,
+    deliveryMax: 35,
+    imageUrl: 'https://images.unsplash.com/photo-1606755962773-d324e0a13086?w=400&h=400&fit=crop',
+    sidebarCategory: 'meals',
+    pillCategories: ['wings', 'flash-deals'],
+  },
+  {
+    id: 'chicken-sandwich',
+    title: 'Crispy Chicken Sandwich',
+    vendor: 'Local Deli',
+    price: 3.85,
+    originalPrice: 8.5,
+    rating: 4.4,
+    reviewCount: '160+',
+    deliveryMin: 15,
+    deliveryMax: 30,
+    imageUrl: 'https://images.unsplash.com/photo-1606755962773-d324e0a13086?w=400&h=400&fit=crop',
+    sidebarCategory: 'meals',
+    pillCategories: ['sandwiches', 'burgers'],
+  },
+  {
+    id: 'pad-thai',
+    title: 'Pad Thai Noodles',
+    vendor: 'Thai Kitchen',
+    price: 5.95,
+    originalPrice: 11.5,
+    rating: 4.7,
+    reviewCount: '88+',
+    deliveryMin: 20,
+    deliveryMax: 35,
+    imageUrl: 'https://images.unsplash.com/photo-1559314809-0d155014e29e?w=400&h=400&fit=crop',
+    sidebarCategory: 'meals',
+    pillCategories: ['thai'],
+  },
+  {
+    id: 'butter-chicken',
+    title: 'Butter Chicken & Rice',
+    vendor: 'Curry House',
+    price: 6.75,
+    originalPrice: 13.5,
+    rating: 4.8,
+    reviewCount: '102+',
+    deliveryMin: 25,
+    deliveryMax: 40,
+    imageUrl: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400&h=400&fit=crop',
+    sidebarCategory: 'meals',
+    pillCategories: ['indian'],
+  },
+  {
+    id: 'cold-brew',
+    title: 'Cold Brew Coffee (32 oz)',
+    vendor: 'Blue Bottle',
+    price: 4.99,
+    originalPrice: 8.99,
+    rating: 4.7,
+    reviewCount: '140+',
+    deliveryMin: 10,
+    deliveryMax: 20,
+    imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&h=400&fit=crop',
+    sidebarCategory: 'grocery',
+    pillCategories: ['coffee-tea', 'convenience'],
+  },
+  {
+    id: 'snack-pack',
+    title: 'Late-Night Snack Pack',
+    vendor: 'Bodega Express',
+    price: 2.99,
+    originalPrice: 6.49,
+    rating: 4.3,
+    reviewCount: '75+',
+    deliveryMin: 10,
+    deliveryMax: 20,
+    imageUrl: 'https://images.unsplash.com/photo-1621939514649-280e2ee25f60?w=400&h=400&fit=crop',
+    sidebarCategory: 'grocery',
+    pillCategories: ['convenience', 'flash-deals'],
   },
 ]
+
+function filterCatalogProducts(
+  sidebar: string,
+  pill: string | null,
+): Product[] {
+  return catalogProducts.filter((product) => {
+    if (sidebar !== 'home' && product.sidebarCategory !== sidebar) return false
+    if (pill && !product.pillCategories.includes(pill as PillCategoryId)) return false
+    return true
+  })
+}
+
+function buildProductSections(
+  sidebar: string,
+  pill: string | null,
+  itemsLimit: number,
+): ProductSection[] {
+  const filtered = filterCatalogProducts(sidebar, pill)
+  const categoryIds: SidebarCategoryId[] =
+    sidebar === 'home' ? SECTION_ORDER : [sidebar as SidebarCategoryId]
+
+  return categoryIds
+    .map((categoryId) => {
+      const categoryProducts = filtered.filter((p) => p.sidebarCategory === categoryId)
+      return {
+        id: categoryId,
+        title: sidebarSectionTitles[categoryId],
+        products: categoryProducts.slice(0, itemsLimit),
+        totalCount: categoryProducts.length,
+      }
+    })
+    .filter((section) => section.totalCount > 0)
+}
+
+function hasMoreProducts(
+  sidebar: string,
+  pill: string | null,
+  itemsLimit: number,
+): boolean {
+  const filtered = filterCatalogProducts(sidebar, pill)
+  const categoryIds: SidebarCategoryId[] =
+    sidebar === 'home' ? SECTION_ORDER : [sidebar as SidebarCategoryId]
+
+  return categoryIds.some((categoryId) => {
+    const count = filtered.filter((p) => p.sidebarCategory === categoryId).length
+    return count > itemsLimit
+  })
+}
 
 const hideScrollbar =
   '[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
 
 const textButtonHover = 'hover:bg-gray-300'
+
+const productImagePlaceholderSvg = encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><rect width="400" height="400" fill="#f3f4f6"/><circle cx="200" cy="176" r="72" fill="#e5e7eb"/><path d="M128 292h144l-18-36H146l-18 36Z" fill="#d1d5db"/><path d="M176 148v24M200 136v36M224 148v24" stroke="#9ca3af" stroke-width="8" stroke-linecap="round"/></svg>',
+)
+
+const PRODUCT_IMAGE_PLACEHOLDER = `data:image/svg+xml,${productImagePlaceholderSvg}`
 
 async function reverseGeocode(lat: number, lon: number): Promise<string> {
   const res = await fetch(
@@ -673,16 +994,25 @@ function fetchCurrentAddress(): Promise<string> {
 
 /* ─── Subcomponents ─── */
 
+function ProductImage({ src, alt }: { src: string; alt: string }) {
+  const [imageSrc, setImageSrc] = useState(src)
+
+  return (
+    <img
+      src={imageSrc}
+      alt={alt}
+      onError={() => setImageSrc(PRODUCT_IMAGE_PLACEHOLDER)}
+      className="h-full w-full object-cover"
+      loading="lazy"
+    />
+  )
+}
+
 function ProductCard({ product, onAdd }: { product: Product; onAdd: (id: string) => void }) {
   return (
     <article className="w-56 shrink-0 overflow-hidden rounded-xl border border-gray-100 bg-white transition hover:shadow-md">
       <div className="relative aspect-square overflow-hidden bg-gray-50">
-        <img
-          src={product.imageUrl}
-          alt={product.title}
-          className="h-full w-full object-cover"
-          loading="lazy"
-        />
+        <ProductImage src={product.imageUrl} alt={product.title} />
         <button
           type="button"
           aria-label={`Add ${product.title} to cart`}
@@ -1094,8 +1424,22 @@ export default function Browse() {
   const [pendingProductId, setPendingProductId] = useState<string | null>(null)
   const [activeSidebar, setActiveSidebar] = useState('home')
   const [activePill, setActivePill] = useState<string | null>(null)
+  const [itemsLimit, setItemsLimit] = useState(INITIAL_ITEMS_PER_SECTION)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const searchTimerRef = useRef<number | null>(null)
+
+  const productSections = buildProductSections(activeSidebar, activePill, itemsLimit)
+  const showMoreAvailable = hasMoreProducts(activeSidebar, activePill, itemsLimit)
+
+  const handleSidebarChange = (categoryId: string) => {
+    setActiveSidebar(categoryId)
+    setItemsLimit(INITIAL_ITEMS_PER_SECTION)
+  }
+
+  const handlePillChange = (pillId: string | null) => {
+    setActivePill(pillId)
+    setItemsLimit(INITIAL_ITEMS_PER_SECTION)
+  }
 
   const handleAddressDraftChange = (value: string) => {
     setAddressDraft(value)
@@ -1295,7 +1639,7 @@ export default function Browse() {
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => setActiveSidebar(item.id)}
+                  onClick={() => handleSidebarChange(item.id)}
                   className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium ${
                     active
                       ? 'bg-emerald-50 text-emerald-700'
@@ -1316,11 +1660,38 @@ export default function Browse() {
             <CategoryPills
               pills={pills}
               activePill={activePill}
-              onSelect={setActivePill}
+              onSelect={handlePillChange}
             />
 
-            <ProductRow title="Today's Offers" products={todaysOffers} onAdd={handleAddToCart} />
-            <ProductRow title="Prepared Meals" products={preparedMeals} onAdd={handleAddToCart} />
+            {productSections.length === 0 ? (
+              <div className="mt-10 rounded-xl border border-gray-100 bg-gray-50 px-6 py-10 text-center">
+                <p className="text-base font-semibold text-slate-900">No items found</p>
+                <p className="mt-1 text-sm text-slate-500">
+                  Try another category or clear your filters.
+                </p>
+              </div>
+            ) : (
+              productSections.map((section) => (
+                <ProductRow
+                  key={section.id}
+                  title={section.title}
+                  products={section.products}
+                  onAdd={handleAddToCart}
+                />
+              ))
+            )}
+
+            {showMoreAvailable && (
+              <div className="mt-8 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setItemsLimit((limit) => limit + ITEMS_INCREMENT)}
+                  className={`rounded-full border border-gray-200 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 shadow-sm ${textButtonHover}`}
+                >
+                  Show more
+                </button>
+              </div>
+            )}
 
             <div className="h-8" />
           </div>
