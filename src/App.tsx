@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AppProvider } from './lib/AppContext'
 import Layout from './components/Layout'
 import Landing from './pages/Landing'
+import Browse from './pages/Browse'
 import Listings from './pages/Listings'
 import ListingDetail from './pages/ListingDetail'
 import Login from './pages/Login'
@@ -16,6 +17,7 @@ function App() {
     <AppProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/browse" element={<Browse />} />
           <Route element={<Layout />}>
             <Route path="/" element={<Landing />} />
             <Route path="/listings" element={<Listings />} />

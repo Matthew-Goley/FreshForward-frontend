@@ -7,7 +7,7 @@ export default function NavBar() {
   return (
     <nav className="flex flex-wrap items-center gap-4 border-b border-gray-300 px-4 py-3 text-sm">
       <Link to="/">FreshForward</Link>
-      <Link to="/listings">Browse Listings</Link>
+      <Link to="/browse">Browse Listings</Link>
       <Link to="/restaurant/apply">Restaurant Application</Link>
       {currentUser?.accountType === 'restaurant' && <Link to="/restaurant/dashboard">Dashboard</Link>}
 

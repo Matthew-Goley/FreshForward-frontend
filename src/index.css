@@ -1,1 +1,61 @@
 @import "tailwindcss";
+
+@keyframes banner-fall-out {
+  to {
+    transform: translateY(1.75rem);
+    opacity: 0;
+  }
+}
+
+@keyframes banner-fall-in {
+  from {
+    transform: translateY(-1.75rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.banner-fall-out {
+  animation: banner-fall-out 0.45s ease-in forwards;
+}
+
+.banner-fall-in {
+  animation: banner-fall-in 0.45s ease-out forwards;
+}
+
+@keyframes cart-bump {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.14);
+  }
+  65% {
+    transform: scale(0.96);
+  }
+}
+
+@keyframes cart-badge-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.35);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.cart-bump {
+  animation: cart-bump 0.45s ease-out;
+}
+
+.cart-badge-pop {
+  display: inline-block;
+  animation: cart-badge-pop 0.45s ease-out;
+}
