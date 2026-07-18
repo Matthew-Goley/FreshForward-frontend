@@ -1,78 +1,141 @@
 import { Link } from 'react-router-dom'
-import { deals } from '../data/deals'
-import { marketplaces, stats } from '../data/site'
-import DealCard from '../components/DealCard'
-import MarketplaceCard from '../components/MarketplaceCard'
-import StatCard from '../components/StatCard'
+import HomeHero from '../components/HomeHero'
+
+const audiences = [
+  {
+    title: 'Shoppers',
+    description: 'People looking for lower-cost groceries, meals, and fresh food nearby.',
+  },
+  {
+    title: 'Local businesses',
+    description: 'Restaurants, grocery stores, bakeries, and family-owned sellers with surplus inventory.',
+  },
+  {
+    title: 'Communities',
+    description: 'Neighborhoods working to reduce food waste and improve access to affordable food.',
+  },
+]
+
+const shopperSteps = [
+  'Enter your location',
+  'Browse nearby discounted food',
+  'Reserve or purchase',
+  'Pick up during the listed window',
+]
+
+const sellerSteps = [
+  'Create a listing',
+  'Add price, quantity, and pickup time',
+  'Reach nearby customers',
+  'Recover revenue and reduce waste',
+]
+
+const reasons = [
+  {
+    title: 'Save money',
+    description: 'Help households stretch food budgets with lower-cost groceries and prepared meals.',
+  },
+  {
+    title: 'Reduce food waste',
+    description: 'Give surplus and imperfect-but-good food a practical path to people who can use it.',
+  },
+  {
+    title: 'Support local businesses',
+    description: 'Help stores, restaurants, and sellers recover value from inventory they already prepared.',
+  },
+]
 
 export default function Landing() {
   return (
     <>
-      {/* Hero */}
-      <section className="bg-gradient-to-b from-emerald-50 to-white">
-        <div className="mx-auto max-w-6xl px-4 py-16 text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-            Fresh food, finally affordable
-          </h1>
-          <p className="mx-auto mt-4 max-w-xl text-slate-600">
-            Save food. Save money. Choose your marketplace below.
+      <HomeHero />
+
+      <section className="bg-white">
+        <div className="mx-auto max-w-[var(--page-max-width)] px-4 py-14 sm:py-18">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-sm font-bold uppercase tracking-wide text-[var(--color-dark-green)]">Our mission</p>
+          <h2 className="mt-3 text-3xl font-bold text-[var(--color-primary-text)] sm:text-4xl">
+            Make good food easier to afford and harder to waste.
+          </h2>
+          <p className="mt-4 text-lg leading-8 text-[var(--color-secondary-text)]">
+            FreshForward makes nutritious food more affordable while helping local businesses recover value from surplus inventory that might otherwise go to waste.
           </p>
-
-          <div className="mt-8 flex justify-center gap-3">
-            <Link to="/deals" className="rounded-lg bg-emerald-600 px-6 py-3 font-medium text-white hover:bg-emerald-700">
-              Browse Deals
-            </Link>
-            <Link to="/market" className="rounded-lg border border-emerald-600 px-6 py-3 font-medium text-emerald-700 hover:bg-emerald-50">
-              Explore Market
-            </Link>
-          </div>
-
-          <div className="mx-auto mt-12 grid max-w-2xl grid-cols-3 gap-6">
-            {stats.map((stat) => (
-              <StatCard key={stat.label} stat={stat} />
-            ))}
-          </div>
+        </div>
         </div>
       </section>
 
-      {/* Marketplaces */}
-      <section className="mx-auto max-w-6xl px-4 py-14">
-        <div className="grid gap-6 sm:grid-cols-2">
-          {marketplaces.map((market) => (
-            <MarketplaceCard key={market.id} market={market} />
+      <section className="mx-auto max-w-[var(--page-max-width)] px-4 py-10 sm:py-14">
+        <SectionIntro title="Who FreshForward serves" />
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          {audiences.map((audience) => (
+            <article key={audience.title} className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-white p-5 shadow-[var(--shadow-card)]">
+              <h3 className="text-lg font-bold text-[var(--color-primary-text)]">{audience.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-[var(--color-secondary-text)]">{audience.description}</p>
+            </article>
           ))}
         </div>
       </section>
 
-      {/* Featured deals */}
-      <section className="mx-auto max-w-6xl px-4 py-4">
-        <p className="text-sm font-medium uppercase tracking-wide text-emerald-600">Featured Deals</p>
-        <h2 className="mt-1 text-2xl font-bold text-slate-900">Live Deals Near You</h2>
+      <section className="bg-white">
+        <div className="mx-auto max-w-[var(--page-max-width)] px-4 py-12 sm:py-16">
+        <SectionIntro title="How it works" />
+        <div className="mt-6 grid gap-5 lg:grid-cols-2">
+          <StepFlow title="For shoppers" steps={shopperSteps} />
+          <StepFlow title="For sellers" steps={sellerSteps} />
+        </div>
+        </div>
+      </section>
 
-        <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-          {deals.map((deal) => (
-            <DealCard key={deal.id} deal={deal} />
+      <section className="mx-auto max-w-[var(--page-max-width)] px-4 py-10 sm:py-14">
+        <SectionIntro title="Why it matters" />
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          {reasons.map((reason) => (
+            <article key={reason.title} className="rounded-[var(--radius-card)] bg-[var(--color-pale-green)] p-5">
+              <h3 className="text-lg font-bold text-[var(--color-primary-text)]">{reason.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-[var(--color-secondary-text)]">{reason.description}</p>
+            </article>
           ))}
         </div>
       </section>
 
-      {/* Seller CTA */}
-      <section className="mx-auto mt-16 max-w-6xl px-4">
-        <div className="rounded-2xl bg-emerald-700 px-6 py-12 text-center text-white">
-          <h2 className="text-2xl font-bold sm:text-3xl">You cook it, we sell it.</h2>
-          <p className="mx-auto mt-2 max-w-lg text-emerald-100">
-            Join hundreds of local sellers reducing food waste and earning extra income.
-          </p>
-          <div className="mt-6 flex justify-center gap-3">
-            <Link to="/sell" className="rounded-lg bg-white px-6 py-3 font-medium text-emerald-700 hover:bg-emerald-50">
-              Start as Grocer
-            </Link>
-            <Link to="/sell" className="rounded-lg border border-white px-6 py-3 font-medium text-white hover:bg-emerald-600">
-              Start as Seller
-            </Link>
+      <section className="mx-auto max-w-[var(--page-max-width)] px-4 py-12 sm:py-16">
+        <div className="grid gap-5 rounded-[var(--radius-card)] bg-[var(--color-dark-green)] p-6 text-white sm:p-8 md:grid-cols-[1fr_auto] md:items-center">
+          <div>
+            <h2 className="text-2xl font-bold sm:text-3xl">Turn surplus food into revenue</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--color-pale-green)]">
+              List unsold groceries and meals, reach nearby customers, and reduce waste.
+            </p>
           </div>
+          <Link
+            to="/sell"
+            className="inline-flex min-h-11 items-center justify-center rounded-[var(--radius-control)] bg-white px-6 text-base font-semibold text-[var(--color-dark-green)] transition hover:bg-[var(--color-pale-green)] focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-dark-green)]"
+          >
+            Start selling
+          </Link>
         </div>
       </section>
     </>
+  )
+}
+
+function SectionIntro({ title }: { title: string }) {
+  return <h2 className="text-2xl font-bold text-[var(--color-primary-text)] sm:text-3xl">{title}</h2>
+}
+
+function StepFlow({ title, steps }: { title: string; steps: string[] }) {
+  return (
+    <article className="rounded-[var(--radius-card)] border border-[var(--color-border)] bg-white p-5 shadow-[var(--shadow-card)]">
+      <h3 className="text-lg font-bold text-[var(--color-primary-text)]">{title}</h3>
+      <ol className="mt-4 space-y-3">
+        {steps.map((step, index) => (
+          <li key={step} className="flex gap-3">
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--color-pale-green)] text-sm font-bold text-[var(--color-dark-green)]">
+              {index + 1}
+            </span>
+            <span className="pt-0.5 text-sm font-medium text-[var(--color-primary-text)]">{step}</span>
+          </li>
+        ))}
+      </ol>
+    </article>
   )
 }

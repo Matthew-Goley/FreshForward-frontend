@@ -1,1 +1,52 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
+
+:root {
+  font-family: "TT Norms Pro", Inter, system-ui, sans-serif;
+  font-synthesis: none;
+
+  --color-primary-green: #118557;
+  --color-dark-green: #0b5d3f;
+  --color-pale-green: #eef8f2;
+  --color-page-background: #f8faf8;
+  --color-surface: #ffffff;
+  --color-primary-text: #111827;
+  --color-secondary-text: #5f6b66;
+  --color-border: #dbe5df;
+  --color-discount-red: #d63f3f;
+  --color-warning-amber: #f3c35b;
+  --color-success: #148a58;
+  --color-disabled: #9aa6a1;
+
+  --radius-control: 12px;
+  --radius-card: 16px;
+  --page-max-width: 1240px;
+  --shadow-card: 0 1px 2px rgb(23 35 31 / 0.06);
+  --shadow-card-hover: 0 12px 30px rgb(23 35 31 / 0.12);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--color-page-background);
+  color: var(--color-primary-text);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
