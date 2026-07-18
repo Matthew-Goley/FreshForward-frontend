@@ -2,9 +2,50 @@ import { useEffect, useRef, useState, type ReactNode, type SVGProps } from 'reac
 
 /* ─── Types ─── */
 
+const DELIVERY_ADDRESS_KEY = 'ff-delivery-address'
+const SAVED_ADDRESSES_KEY = 'ff-saved-addresses'
+
+function loadSavedAddresses(): SavedAddress[] {
+  try {
+    const raw = localStorage.getItem(SAVED_ADDRESSES_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as SavedAddress[]
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(
+      (address): address is SavedAddress =>
+        typeof address?.id === 'string' && typeof address?.full === 'string' && address.full.trim().length > 0,
+    )
+  } catch {
+    return []
+  }
+}
+
+function loadDeliveryAddress(): string {
+  return localStorage.getItem(DELIVERY_ADDRESS_KEY)?.trim() ?? ''
+}
+
+function loadInitialAddressState(): { deliveryAddress: string; savedAddresses: SavedAddress[] } {
+  const deliveryAddress = loadDeliveryAddress()
+  const savedAddresses = loadSavedAddresses()
+
+  if (deliveryAddress && !savedAddresses.some((item) => item.full === deliveryAddress)) {
+    return {
+      deliveryAddress,
+      savedAddresses: [...savedAddresses, { id: crypto.randomUUID(), full: deliveryAddress }],
+    }
+  }
+
+  return { deliveryAddress, savedAddresses }
+}
+
 interface SavedAddress {
   id: string
   full: string
+}
+
+interface CartLineItem {
+  productId: string
+  quantity: number
 }
 
 type SidebarCategoryId = 'grocery' | 'vegan' | 'dairy' | 'meat' | 'bakery' | 'meals' | 'deals'
@@ -835,6 +876,10 @@ const catalogProducts: Product[] = [
   },
 ]
 
+function getProductById(productId: string): Product | undefined {
+  return catalogProducts.find((product) => product.id === productId)
+}
+
 function matchesProductSearch(product: Product, searchQuery: string): boolean {
   const query = searchQuery.trim().toLowerCase()
   if (!query) return true
@@ -1039,19 +1084,51 @@ function ProductImage({ src, alt }: { src: string; alt: string }) {
   )
 }
 
-function ProductCard({ product, onAdd }: { product: Product; onAdd: (id: string) => void }) {
+function ProductCard({
+  product,
+  cartQuantity,
+  onAdd,
+  onChangeQuantity,
+}: {
+  product: Product
+  cartQuantity: number
+  onAdd: (id: string) => void
+  onChangeQuantity: (id: string, delta: 1 | -1) => void
+}) {
   return (
     <article className="w-56 shrink-0 overflow-hidden rounded-xl border border-gray-100 bg-white transition hover:shadow-md">
       <div className="relative aspect-square overflow-hidden bg-gray-50">
         <ProductImage src={product.imageUrl} alt={product.title} />
-        <button
-          type="button"
-          aria-label={`Add ${product.title} to cart`}
-          onClick={() => onAdd(product.id)}
-          className="absolute bottom-2 right-2 grid h-9 w-9 place-items-center rounded-full bg-white text-slate-900 shadow-md transition hover:scale-105 hover:bg-emerald-50"
-        >
-          <IconPlus className="h-5 w-5" />
-        </button>
+        {cartQuantity > 0 ? (
+          <div className="absolute bottom-2 right-2 flex items-center overflow-hidden rounded-full bg-white shadow-md">
+            <button
+              type="button"
+              aria-label={`Decrease quantity of ${product.title}`}
+              onClick={() => onChangeQuantity(product.id, -1)}
+              className={`grid h-9 w-9 place-items-center text-lg font-semibold text-slate-700 ${textButtonHover}`}
+            >
+              −
+            </button>
+            <span className="min-w-6 text-center text-sm font-bold text-slate-900">{cartQuantity}</span>
+            <button
+              type="button"
+              aria-label={`Increase quantity of ${product.title}`}
+              onClick={() => onChangeQuantity(product.id, 1)}
+              className={`grid h-9 w-9 place-items-center text-lg font-semibold text-slate-700 ${textButtonHover}`}
+            >
+              +
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            aria-label={`Add ${product.title} to cart`}
+            onClick={() => onAdd(product.id)}
+            className="absolute bottom-2 right-2 grid h-9 w-9 place-items-center rounded-full bg-white text-slate-900 shadow-md transition hover:scale-105 hover:bg-emerald-50"
+          >
+            <IconPlus className="h-5 w-5" />
+          </button>
+        )}
       </div>
       <div className="p-3">
         <h3 className="line-clamp-2 text-sm font-bold text-slate-900">{product.title}</h3>
@@ -1132,16 +1209,209 @@ function CategoryPills({
   )
 }
 
+function CartDropdown({
+  items,
+  open,
+  bump,
+  headerScrolled,
+  onToggle,
+  onClose,
+  onRemoveItem,
+  onChangeQuantity,
+  onClearCart,
+}: {
+  items: CartLineItem[]
+  open: boolean
+  bump: boolean
+  headerScrolled: boolean
+  onToggle: () => void
+  onClose: () => void
+  onRemoveItem: (productId: string) => void
+  onChangeQuantity: (productId: string, delta: 1 | -1) => void
+  onClearCart: () => void
+}) {
+  const panelRef = useRef<HTMLDivElement>(null)
+  const cartCount = items.reduce((sum, item) => sum + item.quantity, 0)
+  const subtotal = items.reduce((sum, item) => {
+    const product = getProductById(item.productId)
+    return sum + (product?.price ?? 0) * item.quantity
+  }, 0)
+
+  useEffect(() => {
+    if (!open) return
+    const handleClick = (e: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        onClose()
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open, onClose])
+
+  return (
+    <div ref={panelRef} className="relative">
+      <button
+        type="button"
+        aria-label={`Shopping cart, ${cartCount} items`}
+        aria-expanded={open}
+        onClick={onToggle}
+        className={`relative flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold transition-colors ${
+          bump ? 'cart-bump' : ''
+        } ${
+          headerScrolled
+            ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+            : 'bg-white text-emerald-700 hover:bg-emerald-50'
+        }`}
+      >
+        <IconCart className="h-4 w-4" />
+        <span key={cartCount} className={bump ? 'cart-badge-pop' : ''}>
+          {cartCount}
+        </span>
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full z-50 mt-3 w-[min(22rem,calc(100vw-2rem))]">
+          <div className="absolute -top-1.5 right-6 h-3 w-3 rotate-45 border-l border-t border-gray-200 bg-white" />
+          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
+            <div className="border-b border-gray-100 px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-base font-bold text-slate-900">Your Cart</p>
+                {items.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={onClearCart}
+                    className={`rounded-lg px-2 py-1 text-xs font-medium text-slate-500 ${textButtonHover}`}
+                  >
+                    Clear cart
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="max-h-80 overflow-y-auto">
+              {items.length === 0 ? (
+                <div className="px-4 py-8 text-center">
+                  <p className="text-sm font-semibold text-slate-900">Your cart is empty</p>
+                  <p className="mt-1 text-sm text-slate-500">Add rescued food to get started.</p>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className={`mt-4 rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-slate-700 ${textButtonHover}`}
+                  >
+                    Continue shopping
+                  </button>
+                </div>
+              ) : (
+                items.map((item) => {
+                  const product = getProductById(item.productId)
+                  if (!product) return null
+                  return (
+                    <div
+                      key={item.productId}
+                      className="flex gap-3 border-b border-gray-100 px-4 py-3 last:border-b-0"
+                    >
+                      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-gray-50">
+                        <ProductImage src={product.imageUrl} alt={product.title} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-slate-900">{product.title}</p>
+                            <p className="truncate text-xs text-slate-500">{product.vendor}</p>
+                          </div>
+                          <button
+                            type="button"
+                            aria-label={`Remove ${product.title} from cart`}
+                            onClick={() => onRemoveItem(item.productId)}
+                            className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-slate-400 hover:text-slate-600 ${textButtonHover}`}
+                          >
+                            <IconX className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between gap-2">
+                          <div className="flex items-center rounded-full border border-gray-200">
+                            <button
+                              type="button"
+                              aria-label={`Decrease quantity of ${product.title}`}
+                              onClick={() => onChangeQuantity(item.productId, -1)}
+                              className={`grid h-7 w-7 place-items-center text-slate-600 ${textButtonHover} rounded-l-full`}
+                            >
+                              −
+                            </button>
+                            <span className="min-w-6 text-center text-sm font-semibold text-slate-900">
+                              {item.quantity}
+                            </span>
+                            <button
+                              type="button"
+                              aria-label={`Increase quantity of ${product.title}`}
+                              onClick={() => onChangeQuantity(item.productId, 1)}
+                              className={`grid h-7 w-7 place-items-center text-slate-600 ${textButtonHover} rounded-r-full`}
+                            >
+                              +
+                            </button>
+                          </div>
+                          <p className="text-sm font-bold text-emerald-700">
+                            ${(product.price * item.quantity).toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+
+            {items.length > 0 && (
+              <div className="border-t border-gray-100 px-4 py-3">
+                <div className="mb-3 flex items-center justify-between text-sm">
+                  <span className="text-slate-500">Subtotal</span>
+                  <span className="font-bold text-slate-900">${subtotal.toFixed(2)}</span>
+                </div>
+                <button
+                  type="button"
+                  className="mb-2 w-full rounded-full bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+                >
+                  Checkout
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className={`mb-2 w-full rounded-full border border-gray-200 px-4 py-2.5 text-sm font-medium text-slate-700 ${textButtonHover}`}
+                >
+                  Continue shopping
+                </button>
+                <button
+                  type="button"
+                  className={`w-full rounded-full border border-dashed border-gray-200 px-4 py-2 text-sm font-medium text-slate-500 ${textButtonHover}`}
+                >
+                  Add promo code
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function ProductRow({
   title,
   products,
+  cartItems,
   onAdd,
+  onChangeQuantity,
 }: {
   title: string
   products: Product[]
+  cartItems: CartLineItem[]
   onAdd: (id: string) => void
+  onChangeQuantity: (id: string, delta: 1 | -1) => void
 }) {
   const trackRef = useRef<HTMLDivElement>(null)
+
+  const getCartQuantity = (productId: string) =>
+    cartItems.find((item) => item.productId === productId)?.quantity ?? 0
 
   const scroll = (dir: -1 | 1) => {
     trackRef.current?.scrollBy({ left: dir * 320, behavior: 'smooth' })
@@ -1178,7 +1448,13 @@ function ProductRow({
       </div>
       <div ref={trackRef} className={`flex gap-4 overflow-x-auto pb-2 ${hideScrollbar}`}>
         {products.map((p) => (
-          <ProductCard key={p.id} product={p} onAdd={onAdd} />
+          <ProductCard
+            key={p.id}
+            product={p}
+            cartQuantity={getCartQuantity(p.id)}
+            onAdd={onAdd}
+            onChangeQuantity={onChangeQuantity}
+          />
         ))}
       </div>
     </section>
@@ -1202,6 +1478,7 @@ function AddressDropdown({
   onSelectSuggestion,
   onSelectSaved,
   onRemoveSaved,
+  onClearCurrentLocation,
   onManualSave,
   onUseLocation,
   onGreenHeader = false,
@@ -1222,6 +1499,7 @@ function AddressDropdown({
   onSelectSuggestion: (suggestion: AddressSuggestion) => void
   onSelectSaved: (full: string) => void
   onRemoveSaved: (id: string) => void
+  onClearCurrentLocation: () => void
   onManualSave: () => void
   onUseLocation: () => void
   onGreenHeader?: boolean
@@ -1247,6 +1525,12 @@ function AddressDropdown({
   }, [open, mode])
 
   const displayAddress = address ? formatAddressShort(address) : ''
+  const trimmedCurrentLocation = currentLocation.trim()
+  const detectedAlreadySaved = savedAddresses.some(
+    (saved) => saved.full.trim() === trimmedCurrentLocation,
+  )
+  const showDetectedAddress = trimmedCurrentLocation.length > 0 && !detectedAlreadySaved
+  const detectedSecondary = trimmedCurrentLocation.split(',').slice(1).join(',').trim()
 
   return (
     <div ref={panelRef} className="relative">
@@ -1388,6 +1672,38 @@ function AddressDropdown({
                     )
                   })}
 
+                  {showDetectedAddress && (
+                    <div
+                      className={`flex items-center gap-1 border-b border-gray-100 ${
+                        address === trimmedCurrentLocation ? 'bg-emerald-50' : ''
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => onSelectSaved(trimmedCurrentLocation)}
+                        className={`flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left ${textButtonHover}`}
+                      >
+                        <IconGpsTarget className="h-4 w-4 shrink-0 text-emerald-600" />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-semibold text-slate-900">
+                            {formatAddressShort(trimmedCurrentLocation)}
+                          </p>
+                          <p className="truncate text-sm text-emerald-600">
+                            {detectedSecondary || 'Detected location'}
+                          </p>
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Remove detected address ${formatAddressShort(trimmedCurrentLocation)}`}
+                        onClick={onClearCurrentLocation}
+                        className={`mr-3 grid h-8 w-8 shrink-0 place-items-center rounded-full text-slate-400 hover:text-slate-600 ${textButtonHover}`}
+                      >
+                        <IconX className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+
                   <button
                     type="button"
                     onClick={() => onSetMode('manual')}
@@ -1423,15 +1739,6 @@ function AddressDropdown({
                   <div className="min-w-0">
                     {locationLoading ? (
                       <p className="text-sm font-semibold text-emerald-700">Detecting your location…</p>
-                    ) : currentLocation ? (
-                      <>
-                        <p className="truncate font-semibold text-emerald-700">
-                          {formatAddressShort(currentLocation)}
-                        </p>
-                        <p className="truncate text-sm text-emerald-600/80">
-                          {currentLocation.split(',').slice(1).join(',').trim() || 'Current location'}
-                        </p>
-                      </>
                     ) : (
                       <>
                         <p className="font-semibold text-emerald-700">Use current location</p>
@@ -1452,9 +1759,12 @@ function AddressDropdown({
 /* ─── Page ─── */
 
 export default function Browse() {
-  const [cartCount, setCartCount] = useState(0)
-  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([])
-  const [deliveryAddress, setDeliveryAddress] = useState('')
+  const [cartItems, setCartItems] = useState<CartLineItem[]>([])
+  const [cartOpen, setCartOpen] = useState(false)
+  const [cartBump, setCartBump] = useState(false)
+  const initialAddressState = loadInitialAddressState()
+  const [savedAddresses, setSavedAddresses] = useState(initialAddressState.savedAddresses)
+  const [deliveryAddress, setDeliveryAddress] = useState(initialAddressState.deliveryAddress)
   const [locationLoading, setLocationLoading] = useState(false)
   const [addressDropdownOpen, setAddressDropdownOpen] = useState(false)
   const [addressPanelMode, setAddressPanelMode] = useState<'search' | 'manual'>('search')
@@ -1473,6 +1783,45 @@ export default function Browse() {
   const heroRef = useRef<HTMLDivElement>(null)
   const searchTimerRef = useRef<number | null>(null)
 
+  const bumpCart = () => {
+    setCartBump(true)
+    window.setTimeout(() => setCartBump(false), 450)
+  }
+
+  const addProductToCart = (productId: string) => {
+    if (!getProductById(productId)) return
+    setCartItems((prev) => {
+      const existing = prev.find((item) => item.productId === productId)
+      if (existing) {
+        return prev.map((item) =>
+          item.productId === productId ? { ...item, quantity: item.quantity + 1 } : item,
+        )
+      }
+      return [...prev, { productId, quantity: 1 }]
+    })
+    bumpCart()
+  }
+
+  const removeCartItem = (productId: string) => {
+    setCartItems((prev) => prev.filter((item) => item.productId !== productId))
+  }
+
+  const changeCartQuantity = (productId: string, delta: 1 | -1) => {
+    setCartItems((prev) =>
+      prev
+        .map((item) =>
+          item.productId === productId
+            ? { ...item, quantity: item.quantity + delta }
+            : item,
+        )
+        .filter((item) => item.quantity > 0),
+    )
+  }
+
+  const clearCart = () => {
+    setCartItems([])
+  }
+
   useEffect(() => {
     const scrollRoot = pageScrollRef.current
     const hero = heroRef.current
@@ -1488,6 +1837,23 @@ export default function Browse() {
     observer.observe(hero)
     return () => observer.disconnect()
   }, [])
+
+  useEffect(() => {
+    const trimmed = deliveryAddress.trim()
+    if (trimmed) {
+      localStorage.setItem(DELIVERY_ADDRESS_KEY, trimmed)
+      return
+    }
+    localStorage.removeItem(DELIVERY_ADDRESS_KEY)
+  }, [deliveryAddress])
+
+  useEffect(() => {
+    if (savedAddresses.length > 0) {
+      localStorage.setItem(SAVED_ADDRESSES_KEY, JSON.stringify(savedAddresses))
+      return
+    }
+    localStorage.removeItem(SAVED_ADDRESSES_KEY)
+  }, [savedAddresses])
 
   const productSections = buildProductSections(activeSidebar, activePill, itemsLimit, searchQuery)
   const showMoreAvailable = hasMoreProducts(activeSidebar, activePill, itemsLimit, searchQuery)
@@ -1539,17 +1905,29 @@ export default function Browse() {
     setAddressDraft('')
     setAddressSuggestions([])
     if (pendingId) {
-      setCartCount((c) => c + 1)
+      addProductToCart(pendingId)
       setPendingProductId(null)
     }
   }
 
   const selectAddress = (address: string) => {
-    setDeliveryAddress(address)
+    const trimmed = address.trim()
+    if (!trimmed) return
+
+    setSavedAddresses((prev) => {
+      if (prev.some((item) => item.full === trimmed)) return prev
+      return [...prev, { id: crypto.randomUUID(), full: trimmed }]
+    })
+    setDeliveryAddress(trimmed)
     setAddressDropdownOpen(false)
     setAddressPanelMode('search')
     setAddressDraft('')
     setAddressSuggestions([])
+  }
+
+  const clearCurrentLocation = () => {
+    setCurrentLocation('')
+    setDeliveryAddress((active) => (active.trim() === currentLocation.trim() ? '' : active))
   }
 
   const removeAddress = (id: string) => {
@@ -1564,6 +1942,7 @@ export default function Browse() {
   }
 
   const openAddressDropdown = () => {
+    setCartOpen(false)
     setAddressDropdownOpen(true)
     setAddressPanelMode('search')
     setAddressDraft('')
@@ -1585,7 +1964,7 @@ export default function Browse() {
 
   const handleAddToCart = (productId: string) => {
     if (deliveryAddress.trim()) {
-      setCartCount((c) => c + 1)
+      addProductToCart(productId)
       return
     }
     setPendingProductId(productId)
@@ -1622,6 +2001,19 @@ export default function Browse() {
       closeAddressDropdown()
     } else {
       openAddressDropdown()
+    }
+  }
+
+  const closeCart = () => {
+    setCartOpen(false)
+  }
+
+  const toggleCart = () => {
+    if (cartOpen) {
+      closeCart()
+    } else {
+      setAddressDropdownOpen(false)
+      setCartOpen(true)
     }
   }
 
@@ -1688,6 +2080,7 @@ export default function Browse() {
               onSelectSuggestion={handleSelectSuggestion}
               onSelectSaved={selectAddress}
               onRemoveSaved={removeAddress}
+              onClearCurrentLocation={clearCurrentLocation}
               onManualSave={handleManualSave}
               onUseLocation={handleUseCurrentLocation}
               onGreenHeader={!headerScrolled}
@@ -1712,18 +2105,17 @@ export default function Browse() {
             >
               Sign Up
             </button>
-            <button
-              type="button"
-              aria-label={`Shopping cart, ${cartCount} items`}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold transition-colors ${
-                headerScrolled
-                  ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                  : 'bg-white text-emerald-700 hover:bg-emerald-50'
-              }`}
-            >
-              <IconCart className="h-4 w-4" />
-              <span>{cartCount}</span>
-            </button>
+            <CartDropdown
+              items={cartItems}
+              open={cartOpen}
+              bump={cartBump}
+              headerScrolled={headerScrolled}
+              onToggle={toggleCart}
+              onClose={closeCart}
+              onRemoveItem={removeCartItem}
+              onChangeQuantity={changeCartQuantity}
+              onClearCart={clearCart}
+            />
           </div>
         </div>
       </header>
@@ -1789,7 +2181,9 @@ export default function Browse() {
                   key={section.id}
                   title={section.title}
                   products={section.products}
+                  cartItems={cartItems}
                   onAdd={handleAddToCart}
+                  onChangeQuantity={changeCartQuantity}
                 />
               ))
             )}
