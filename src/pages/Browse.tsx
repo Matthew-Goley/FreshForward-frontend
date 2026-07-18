@@ -346,7 +346,7 @@ function HeroBanner() {
   const animClass = animPhase === 'out' ? 'banner-fall-out' : animPhase === 'in' ? 'banner-fall-in' : ''
 
   return (
-    <section className="relative w-full overflow-hidden bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-500">
+    <section className="relative w-full overflow-hidden bg-emerald-600 pt-14">
       <div
         aria-hidden
         className="pointer-events-none absolute -left-16 -top-16 h-40 w-40 rounded-full bg-white/10"
@@ -1173,6 +1173,7 @@ function AddressDropdown({
   onRemoveSaved,
   onManualSave,
   onUseLocation,
+  onGreenHeader = false,
 }: {
   address: string
   savedAddresses: SavedAddress[]
@@ -1192,6 +1193,7 @@ function AddressDropdown({
   onRemoveSaved: (id: string) => void
   onManualSave: () => void
   onUseLocation: () => void
+  onGreenHeader?: boolean
 }) {
   const panelRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -1220,18 +1222,26 @@ function AddressDropdown({
       <button
         type="button"
         onClick={onToggle}
-        className={`flex max-w-[10rem] items-center gap-1 overflow-hidden rounded-full border border-gray-100 px-3 py-2 text-sm md:max-w-[14rem] ${textButtonHover}`}
+        className={`flex max-w-[10rem] items-center gap-1 overflow-hidden rounded-full border px-3 py-2 text-sm md:max-w-[14rem] ${
+          onGreenHeader
+            ? 'border-white/30 hover:bg-white/15'
+            : `border-gray-100 ${textButtonHover}`
+        }`}
       >
-        <IconPin className="h-4 w-4 shrink-0 text-slate-500" />
+        <IconPin className={`h-4 w-4 shrink-0 ${onGreenHeader ? 'text-white/80' : 'text-slate-500'}`} />
         {displayAddress ? (
           <>
-            <span className="truncate font-medium text-slate-900">{displayAddress}</span>
-            <IconChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
+            <span className={`truncate font-medium ${onGreenHeader ? 'text-white' : 'text-slate-900'}`}>
+              {displayAddress}
+            </span>
+            <IconChevronDown className={`h-4 w-4 shrink-0 ${onGreenHeader ? 'text-white/70' : 'text-slate-400'}`} />
           </>
         ) : (
           <>
-            <span className="truncate text-slate-500">Add delivery address</span>
-            <IconChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
+            <span className={`truncate ${onGreenHeader ? 'text-white/90' : 'text-slate-500'}`}>
+              Add delivery address
+            </span>
+            <IconChevronDown className={`h-4 w-4 shrink-0 ${onGreenHeader ? 'text-white/70' : 'text-slate-400'}`} />
           </>
         )}
       </button>
@@ -1426,7 +1436,26 @@ export default function Browse() {
   const [activePill, setActivePill] = useState<string | null>(null)
   const [itemsLimit, setItemsLimit] = useState(INITIAL_ITEMS_PER_SECTION)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [headerScrolled, setHeaderScrolled] = useState(false)
+  const pageScrollRef = useRef<HTMLDivElement>(null)
+  const heroRef = useRef<HTMLDivElement>(null)
   const searchTimerRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    const scrollRoot = pageScrollRef.current
+    const hero = heroRef.current
+    if (!scrollRoot || !hero) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setHeaderScrolled(entry.intersectionRatio < 0.15)
+      },
+      { root: scrollRoot, threshold: [0, 0.15, 1] },
+    )
+
+    observer.observe(hero)
+    return () => observer.disconnect()
+  }, [])
 
   const productSections = buildProductSections(activeSidebar, activePill, itemsLimit)
   const showMoreAvailable = hasMoreProducts(activeSidebar, activePill, itemsLimit)
@@ -1560,26 +1589,44 @@ export default function Browse() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-white text-slate-800 [&_button]:cursor-pointer">
-      {/* Sticky control bar */}
-      <header className="sticky top-0 z-30 border-b border-gray-100 bg-white">
+    <div className="h-screen overflow-hidden bg-white text-slate-800 [&_button]:cursor-pointer">
+      {/* Fixed control bar — green over hero, white after scroll */}
+      <header
+        className={`fixed inset-x-0 top-0 z-40 border-b transition-[background-color,border-color,box-shadow,color] duration-300 ease-in-out ${
+          headerScrolled
+            ? 'border-gray-100 bg-white shadow-sm'
+            : 'border-emerald-700/30 bg-emerald-600'
+        }`}
+      >
         <div className="flex items-center gap-3 px-4 py-3 lg:gap-4">
           <button
             type="button"
             aria-label="Toggle food categories"
             aria-expanded={sidebarOpen}
-            className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-gray-100 text-slate-600 ${textButtonHover}`}
+            className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg border transition-colors ${
+              headerScrolled
+                ? `border-gray-100 text-slate-600 ${textButtonHover}`
+                : 'border-white/30 text-white hover:bg-white/15'
+            }`}
             onClick={() => setSidebarOpen((o) => !o)}
           >
             <IconMenu className="h-5 w-5" />
           </button>
 
           <div className="relative min-w-0 flex-1 max-w-2xl">
-            <IconSearch className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <IconSearch
+              className={`pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 ${
+                headerScrolled ? 'text-slate-400' : 'text-white/70'
+              }`}
+            />
             <input
               type="search"
               placeholder="Search FreshForward..."
-              className="w-full rounded-full border border-gray-100 bg-gray-50 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+              className={`w-full rounded-full border py-2.5 pl-10 pr-4 text-sm outline-none transition-colors ${
+                headerScrolled
+                  ? 'border-gray-100 bg-gray-50 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+                  : 'border-white/25 bg-white/15 text-white placeholder:text-white/70 focus:border-white/50 focus:ring-2 focus:ring-white/20'
+              }`}
             />
           </div>
 
@@ -1603,17 +1650,36 @@ export default function Browse() {
               onRemoveSaved={removeAddress}
               onManualSave={handleManualSave}
               onUseLocation={handleUseCurrentLocation}
+              onGreenHeader={!headerScrolled}
             />
-            <button type="button" className={`hidden rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 sm:inline ${textButtonHover}`}>
+            <button
+              type="button"
+              className={`hidden rounded-lg px-3 py-1.5 text-sm font-medium sm:inline ${
+                headerScrolled
+                  ? `text-slate-600 hover:text-slate-900 ${textButtonHover}`
+                  : 'text-white hover:bg-white/15'
+              }`}
+            >
               Sign In
             </button>
-            <button type="button" className={`hidden rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 sm:inline ${textButtonHover}`}>
+            <button
+              type="button"
+              className={`hidden rounded-lg px-3 py-1.5 text-sm font-medium sm:inline ${
+                headerScrolled
+                  ? `text-slate-600 hover:text-slate-900 ${textButtonHover}`
+                  : 'text-white hover:bg-white/15'
+              }`}
+            >
               Sign Up
             </button>
             <button
               type="button"
               aria-label={`Shopping cart, ${cartCount} items`}
-              className="flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+              className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold transition-colors ${
+                headerScrolled
+                  ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                  : 'bg-white text-emerald-700 hover:bg-emerald-50'
+              }`}
             >
               <IconCart className="h-4 w-4" />
               <span>{cartCount}</span>
@@ -1622,16 +1688,19 @@ export default function Browse() {
         </div>
       </header>
 
-      <HeroBanner />
+      <div ref={pageScrollRef} className="h-full overflow-y-auto overscroll-y-contain">
+        <div ref={heroRef}>
+          <HeroBanner />
+        </div>
 
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        {/* Sidebar — pushes content instead of overlapping */}
-        <aside
-          className={`h-full shrink-0 overflow-hidden border-gray-100 bg-white transition-[width] duration-200 ease-in-out ${
-            sidebarOpen ? 'w-56 border-r' : 'w-0'
-          }`}
-        >
-          <nav className="flex h-full w-56 flex-col gap-0.5 overflow-y-auto p-3">
+        <div className="flex items-start">
+          {/* Sidebar — pushes content instead of overlapping */}
+          <aside
+            className={`sticky top-14 max-h-[calc(100vh-3.5rem)] shrink-0 self-start overflow-hidden border-gray-100 bg-white transition-[width] duration-200 ease-in-out ${
+              sidebarOpen ? 'w-56 border-r' : 'w-0'
+            }`}
+          >
+            <nav className="flex h-full max-h-[calc(100vh-3.5rem)] w-56 flex-col gap-0.5 overflow-y-auto p-3">
             {sidebarItems.map((item) => {
               const active = activeSidebar === item.id
               const Icon = item.icon
@@ -1654,8 +1723,8 @@ export default function Browse() {
           </nav>
         </aside>
 
-        {/* Main content */}
-        <main className="min-w-0 flex-1 overflow-y-auto transition-[margin] duration-200 ease-in-out">
+          {/* Main content */}
+          <main className="min-w-0 flex-1">
           <div className="px-4 py-5 sm:px-6 lg:px-8">
             <CategoryPills
               pills={pills}
@@ -1696,6 +1765,7 @@ export default function Browse() {
             <div className="h-8" />
           </div>
         </main>
+        </div>
       </div>
     </div>
   )
