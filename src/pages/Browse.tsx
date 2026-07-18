@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode, type SVGProps } from 'react'
+import { Link } from 'react-router-dom'
 
 /* ─── Types ─── */
 
@@ -2042,6 +2043,33 @@ export default function Browse() {
             <IconMenu className="h-5 w-5" />
           </button>
 
+          <Link
+            to="/"
+            aria-label="FreshForward home"
+            className="flex shrink-0 items-center gap-2 rounded-lg px-1 py-1 transition-opacity hover:opacity-80"
+          >
+            <svg width="24" height="24" viewBox="0 0 26 26" fill="none" aria-hidden="true" className="shrink-0">
+              <rect
+                x="1" y="8.5" width="9.5" height="9.5" rx="2"
+                transform="rotate(-45 5.75 13.25)"
+                fill={headerScrolled ? '#059669' : '#ffffff'}
+              />
+              <rect
+                x="10.2" y="3.2" width="9.5" height="9.5" rx="2"
+                transform="rotate(-45 14.95 7.95)"
+                fill={headerScrolled ? '#059669' : '#ffffff'}
+                fillOpacity={headerScrolled ? 0.55 : 0.6}
+              />
+            </svg>
+            <span
+              className={`hidden text-lg font-bold tracking-tight sm:inline ${
+                headerScrolled ? 'text-slate-800' : 'text-white'
+              }`}
+            >
+              FreshForward
+            </span>
+          </Link>
+
           <div className="relative min-w-0 flex-1 max-w-2xl">
             <IconSearch
               className={`pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 ${
@@ -2085,8 +2113,8 @@ export default function Browse() {
               onUseLocation={handleUseCurrentLocation}
               onGreenHeader={!headerScrolled}
             />
-            <button
-              type="button"
+            <Link
+              to="/login"
               className={`hidden rounded-lg px-3 py-1.5 text-sm font-medium sm:inline ${
                 headerScrolled
                   ? `text-slate-600 hover:text-slate-900 ${textButtonHover}`
@@ -2094,9 +2122,9 @@ export default function Browse() {
               }`}
             >
               Sign In
-            </button>
-            <button
-              type="button"
+            </Link>
+            <Link
+              to="/signup"
               className={`hidden rounded-lg px-3 py-1.5 text-sm font-medium sm:inline ${
                 headerScrolled
                   ? `text-slate-600 hover:text-slate-900 ${textButtonHover}`
@@ -2104,7 +2132,7 @@ export default function Browse() {
               }`}
             >
               Sign Up
-            </button>
+            </Link>
             <CartDropdown
               items={cartItems}
               open={cartOpen}
