@@ -33,7 +33,7 @@ interface Product {
 }
 
 interface ProductSection {
-  id: SidebarCategoryId
+  id: SidebarCategoryId | 'search'
   title: string
   products: Product[]
   totalCount: number
@@ -835,11 +835,22 @@ const catalogProducts: Product[] = [
   },
 ]
 
+function matchesProductSearch(product: Product, searchQuery: string): boolean {
+  const query = searchQuery.trim().toLowerCase()
+  if (!query) return true
+  return (
+    product.title.toLowerCase().includes(query) ||
+    product.vendor.toLowerCase().includes(query)
+  )
+}
+
 function filterCatalogProducts(
   sidebar: string,
   pill: string | null,
+  searchQuery = '',
 ): Product[] {
   return catalogProducts.filter((product) => {
+    if (!matchesProductSearch(product, searchQuery)) return false
     if (sidebar !== 'home' && product.sidebarCategory !== sidebar) return false
     if (pill && !product.pillCategories.includes(pill as PillCategoryId)) return false
     return true
@@ -850,8 +861,23 @@ function buildProductSections(
   sidebar: string,
   pill: string | null,
   itemsLimit: number,
+  searchQuery = '',
 ): ProductSection[] {
-  const filtered = filterCatalogProducts(sidebar, pill)
+  const filtered = filterCatalogProducts(sidebar, pill, searchQuery)
+  const query = searchQuery.trim()
+
+  if (query) {
+    if (filtered.length === 0) return []
+    return [
+      {
+        id: 'search',
+        title: `Results for "${query}"`,
+        products: filtered.slice(0, itemsLimit),
+        totalCount: filtered.length,
+      },
+    ]
+  }
+
   const categoryIds: SidebarCategoryId[] =
     sidebar === 'home' ? SECTION_ORDER : [sidebar as SidebarCategoryId]
 
@@ -872,8 +898,13 @@ function hasMoreProducts(
   sidebar: string,
   pill: string | null,
   itemsLimit: number,
+  searchQuery = '',
 ): boolean {
-  const filtered = filterCatalogProducts(sidebar, pill)
+  const filtered = filterCatalogProducts(sidebar, pill, searchQuery)
+  const query = searchQuery.trim()
+
+  if (query) return filtered.length > itemsLimit
+
   const categoryIds: SidebarCategoryId[] =
     sidebar === 'home' ? SECTION_ORDER : [sidebar as SidebarCategoryId]
 
@@ -1434,6 +1465,7 @@ export default function Browse() {
   const [pendingProductId, setPendingProductId] = useState<string | null>(null)
   const [activeSidebar, setActiveSidebar] = useState('home')
   const [activePill, setActivePill] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
   const [itemsLimit, setItemsLimit] = useState(INITIAL_ITEMS_PER_SECTION)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [headerScrolled, setHeaderScrolled] = useState(false)
@@ -1457,8 +1489,13 @@ export default function Browse() {
     return () => observer.disconnect()
   }, [])
 
-  const productSections = buildProductSections(activeSidebar, activePill, itemsLimit)
-  const showMoreAvailable = hasMoreProducts(activeSidebar, activePill, itemsLimit)
+  const productSections = buildProductSections(activeSidebar, activePill, itemsLimit, searchQuery)
+  const showMoreAvailable = hasMoreProducts(activeSidebar, activePill, itemsLimit, searchQuery)
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value)
+    setItemsLimit(INITIAL_ITEMS_PER_SECTION)
+  }
 
   const handleSidebarChange = (categoryId: string) => {
     setActiveSidebar(categoryId)
@@ -1621,7 +1658,10 @@ export default function Browse() {
             />
             <input
               type="search"
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Search FreshForward..."
+              aria-label="Search food and restaurants"
               className={`w-full rounded-full border py-2.5 pl-10 pr-4 text-sm outline-none transition-colors ${
                 headerScrolled
                   ? 'border-gray-100 bg-gray-50 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
@@ -1734,9 +1774,13 @@ export default function Browse() {
 
             {productSections.length === 0 ? (
               <div className="mt-10 rounded-xl border border-gray-100 bg-gray-50 px-6 py-10 text-center">
-                <p className="text-base font-semibold text-slate-900">No items found</p>
+                <p className="text-base font-semibold text-slate-900">
+                  {searchQuery.trim() ? `No results for "${searchQuery.trim()}"` : 'No items found'}
+                </p>
                 <p className="mt-1 text-sm text-slate-500">
-                  Try another category or clear your filters.
+                  {searchQuery.trim()
+                    ? 'Try a different food name or restaurant.'
+                    : 'Try another category or clear your filters.'}
                 </p>
               </div>
             ) : (
