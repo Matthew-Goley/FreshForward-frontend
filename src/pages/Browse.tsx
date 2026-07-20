@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode, type SVGProps } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 /* ─── Types ─── */
 
@@ -1774,7 +1774,11 @@ export default function Browse() {
   const [suggestionsLoading, setSuggestionsLoading] = useState(false)
   const [currentLocation, setCurrentLocation] = useState('')
   const [pendingProductId, setPendingProductId] = useState<string | null>(null)
-  const [activeSidebar, setActiveSidebar] = useState('home')
+  const [searchParams] = useSearchParams()
+  const categoryParam = searchParams.get('category')
+  const [activeSidebar, setActiveSidebar] = useState(
+    categoryParam && sidebarItems.some((item) => item.id === categoryParam) ? categoryParam : 'home',
+  )
   const [activePill, setActivePill] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [itemsLimit, setItemsLimit] = useState(INITIAL_ITEMS_PER_SECTION)
@@ -2115,9 +2119,9 @@ export default function Browse() {
             />
             <Link
               to="/login"
-              className={`hidden rounded-lg px-3 py-1.5 text-sm font-medium sm:inline ${
+              className={`hidden rounded-lg px-3 py-1.5 text-sm font-medium transition-colors sm:inline ${
                 headerScrolled
-                  ? `text-slate-600 hover:text-slate-900 ${textButtonHover}`
+                  ? 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   : 'text-white hover:bg-white/15'
               }`}
             >
@@ -2125,10 +2129,10 @@ export default function Browse() {
             </Link>
             <Link
               to="/signup"
-              className={`hidden rounded-lg px-3 py-1.5 text-sm font-medium sm:inline ${
+              className={`hidden rounded-lg px-3.5 py-1.5 text-sm font-semibold shadow-sm transition-colors sm:inline ${
                 headerScrolled
-                  ? `text-slate-600 hover:text-slate-900 ${textButtonHover}`
-                  : 'text-white hover:bg-white/15'
+                  ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                  : 'bg-white text-emerald-700 hover:bg-emerald-50'
               }`}
             >
               Sign Up
