@@ -25,16 +25,12 @@ function IconLocationPin(props: SVGProps<SVGSVGElement>) {
   )
 }
 
-function IconArrowRight(props: SVGProps<SVGSVGElement>) {
+function IconGpsTarget(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 20 20" fill="none" {...props}>
-      <path
-        d="M4 10h12M11 5l5 5-5 5"
-        stroke="currentColor"
-        strokeWidth={1.8}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth={1.8} />
+      <circle cx="10" cy="10" r="2.5" fill="currentColor" />
+      <path d="M10 2v2M10 16v2M2 10h2M16 10h2" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
     </svg>
   )
 }
@@ -49,16 +45,6 @@ function IconUser(props: SVGProps<SVGSVGElement>) {
         strokeWidth={1.8}
         strokeLinecap="round"
       />
-    </svg>
-  )
-}
-
-function IconGpsTarget(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" {...props}>
-      <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth={1.8} />
-      <circle cx="10" cy="10" r="2.5" fill="currentColor" />
-      <path d="M10 2v2M10 16v2M2 10h2M16 10h2" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
     </svg>
   )
 }
@@ -93,7 +79,13 @@ function IconX(props: SVGProps<SVGSVGElement>) {
   )
 }
 
-export default function HeroAddressSearch() {
+export default function HeroAddressSearch({
+  className = '',
+  variant = 'default',
+}: {
+  className?: string
+  variant?: 'default' | 'hero'
+}) {
   const navigate = useNavigate()
   const initialAddressState = loadInitialAddressState()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -219,32 +211,43 @@ export default function HeroAddressSearch() {
     }
   }, [])
 
+  const isHero = variant === 'hero'
+
   return (
-    <div ref={containerRef} className="relative mt-8 w-full max-w-xl">
+    <div ref={containerRef} className={`relative w-full ${className}`}>
       <form
         onSubmit={handleSubmit}
-        className="flex w-full items-center gap-2 rounded-full bg-white p-1.5 pl-5 shadow-lg shadow-emerald-900/20"
+        className={
+          isHero
+            ? 'flex w-full items-center gap-2 rounded-full bg-white p-1.5 pl-5 shadow-lg shadow-emerald-900/20'
+            : 'flex w-full items-center gap-2 rounded-xl border border-slate-200 bg-white p-1.5 pl-4 shadow-sm focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20'
+        }
       >
-        <IconLocationPin className="h-5 w-5 shrink-0 text-slate-400" />
+        <IconGpsTarget className="h-5 w-5 shrink-0 text-slate-400" />
         <input
           ref={inputRef}
           type="text"
           value={addressDraft}
           onChange={(e) => handleDraftChange(e.target.value)}
           onFocus={openPanel}
-          placeholder="Search for an address"
-          aria-label="Search for an address"
+          placeholder="Enter delivery or pickup address"
+          aria-label="Enter delivery or pickup address"
           aria-expanded={panelOpen}
           aria-haspopup="listbox"
           autoComplete="off"
-          className="min-w-0 flex-1 border-none bg-transparent py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400"
+          className={`min-w-0 flex-1 border-none bg-transparent text-sm text-black outline-none placeholder:text-slate-400 ${
+            isHero ? 'py-2.5' : 'py-3'
+          }`}
         />
         <button
           type="submit"
-          aria-label="Browse food near this address"
-          className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-600 text-white transition-colors hover:bg-emerald-700"
+          className={
+            isHero
+              ? 'shrink-0 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-emerald-700'
+              : 'shrink-0 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-emerald-700'
+          }
         >
-          <IconArrowRight className="h-4 w-4" />
+          Find Food
         </button>
       </form>
 
@@ -253,8 +256,8 @@ export default function HeroAddressSearch() {
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white text-left shadow-xl">
             {panelMode === 'manual' ? (
               <div className="p-4">
-                <p className="text-base font-bold text-slate-900">Add a new address</p>
-                <p className="mt-1 text-sm text-slate-500">Enter your full delivery address</p>
+                <p className="text-base font-bold text-black">Add a new address</p>
+                <p className="mt-1 text-sm text-black">Enter your full delivery address</p>
                 <textarea
                   value={addressDraft}
                   onChange={(e) => setAddressDraft(e.target.value)}
@@ -267,7 +270,7 @@ export default function HeroAddressSearch() {
                   <button
                     type="button"
                     onClick={() => setPanelMode('search')}
-                    className={`rounded-lg px-3 py-1.5 text-sm text-slate-600 ${textButtonHover}`}
+                    className={`rounded-lg px-3 py-1.5 text-sm text-black ${textButtonHover}`}
                   >
                     Back
                   </button>
@@ -283,16 +286,16 @@ export default function HeroAddressSearch() {
             ) : (
               <>
                 <div className="border-b border-gray-100 px-4 py-3">
-                  <p className="text-base font-bold text-slate-900">Enter Your Address</p>
-                  <p className="mt-1 text-sm text-slate-500">Search for an address</p>
+                  <p className="text-base font-bold text-black">Enter Your Address</p>
+                  <p className="mt-1 text-sm text-black">Search for an address</p>
                 </div>
 
                 <div className="max-h-64 overflow-y-auto">
                   {suggestionsLoading && (
-                    <p className="px-4 py-3 text-sm text-slate-500">Searching addresses…</p>
+                    <p className="px-4 py-3 text-sm text-black">Searching addresses…</p>
                   )}
                   {!suggestionsLoading && addressDraft.trim().length >= 2 && suggestions.length === 0 && (
-                    <p className="px-4 py-3 text-sm text-slate-500">No addresses found. Try a different search.</p>
+                    <p className="px-4 py-3 text-sm text-black">No addresses found. Try a different search.</p>
                   )}
                   {suggestions.map((s) => (
                     <button
@@ -302,8 +305,8 @@ export default function HeroAddressSearch() {
                       className={`flex w-full items-center gap-3 border-b border-gray-100 px-4 py-3 text-left ${textButtonHover}`}
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="truncate font-semibold text-slate-900">{s.primary}</p>
-                        {s.secondary && <p className="truncate text-sm text-slate-500">{s.secondary}</p>}
+                        <p className="truncate font-semibold text-black">{s.primary}</p>
+                        {s.secondary && <p className="truncate text-sm text-black">{s.secondary}</p>}
                       </div>
                       <IconChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
                     </button>
@@ -320,10 +323,10 @@ export default function HeroAddressSearch() {
                         >
                           <IconLocationPin className="h-4 w-4 shrink-0 text-slate-500" />
                           <div className="min-w-0 flex-1">
-                            <p className="truncate font-semibold text-slate-900">
+                            <p className="truncate font-semibold text-black">
                               {formatAddressShort(saved.full)}
                             </p>
-                            {secondary && <p className="truncate text-sm text-slate-500">{secondary}</p>}
+                            {secondary && <p className="truncate text-sm text-black">{secondary}</p>}
                           </div>
                         </button>
                         <button
@@ -347,7 +350,7 @@ export default function HeroAddressSearch() {
                       >
                         <IconGpsTarget className="h-4 w-4 shrink-0 text-emerald-600" />
                         <div className="min-w-0 flex-1">
-                          <p className="truncate font-semibold text-slate-900">
+                          <p className="truncate font-semibold text-black">
                             {formatAddressShort(trimmedCurrentLocation)}
                           </p>
                           <p className="truncate text-sm text-emerald-600">
@@ -375,8 +378,8 @@ export default function HeroAddressSearch() {
                       <IconPlus className="h-4 w-4" />
                     </span>
                     <div>
-                      <p className="font-semibold text-slate-900">Add a new address</p>
-                      <p className="text-sm text-slate-500">Enter address manually</p>
+                      <p className="font-semibold text-black">Add a new address</p>
+                      <p className="text-sm text-black">Enter address manually</p>
                     </div>
                   </button>
                 </div>
@@ -385,7 +388,7 @@ export default function HeroAddressSearch() {
                   type="button"
                   onClick={handleUseCurrentLocation}
                   disabled={locationLoading}
-                  className={`flex w-full items-start gap-3 border-t border-gray-100 px-4 py-3 text-left disabled:opacity-60 ${textButtonHover}`}
+                  className={`flex w-full cursor-pointer items-start gap-3 border-t border-gray-100 px-4 py-3 text-left disabled:cursor-not-allowed disabled:opacity-60 ${textButtonHover}`}
                 >
                   <IconGpsTarget className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
                   <div className="min-w-0">
@@ -405,22 +408,36 @@ export default function HeroAddressSearch() {
         </div>
       )}
 
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+      <div
+        className={
+          isHero
+            ? 'mt-4 flex flex-wrap items-center justify-center gap-3'
+            : 'mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm'
+        }
+      >
         <Link
           to="/login"
           state={{ redirectTo: '/browse' }}
-          className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition-colors hover:bg-emerald-50"
+          className={
+            isHero
+              ? 'inline-flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black shadow-sm transition-colors hover:bg-emerald-50'
+              : 'font-medium text-black transition-colors hover:text-black/80'
+          }
         >
-          <IconUser className="h-4 w-4 text-slate-500" />
+          {isHero && <IconUser className="h-4 w-4 text-slate-500" />}
           Sign in for saved address
         </Link>
         <button
           type="button"
           onClick={handleUseCurrentLocation}
           disabled={locationLoading}
-          className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
+          className={
+            isHero
+              ? 'inline-flex cursor-pointer items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black shadow-sm transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60'
+              : 'cursor-pointer font-medium text-emerald-600 transition-colors hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-60'
+          }
         >
-          <IconGpsTarget className="h-4 w-4 text-emerald-600" />
+          <IconGpsTarget className={`h-4 w-4 ${isHero ? 'text-emerald-600' : ''}`} />
           {locationLoading ? 'Detecting your location…' : 'Use current location'}
         </button>
       </div>

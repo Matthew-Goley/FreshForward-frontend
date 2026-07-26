@@ -1,46 +1,26 @@
-import { useEffect, useRef, useState, type SVGProps } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Logo from '../components/Logo'
 import HeroAddressSearch from '../components/HeroAddressSearch'
-import illustrationCustomer from '../assets/landing/illustration-customer.png'
-import illustrationPartner from '../assets/landing/illustration-partner.png'
-import illustrationApp from '../assets/landing/illustration-app.png'
 
-function IconArrowRight(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" {...props}>
-      <path
-        d="M4 10h12M11 5l5 5-5 5"
-        stroke="currentColor"
-        strokeWidth={1.8}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
+const heroBackgroundImage =
+  'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=2400&q=85'
 
-const audienceCards = [
+const howItWorks = [
   {
-    image: illustrationPartner,
-    title: 'Become a partner',
-    body: 'Turn unsold inventory into revenue instead of waste. Set your own price and pickup window.',
-    linkTo: '/restaurant/apply',
-    linkLabel: 'Apply to list',
+    emoji: '🔍',
+    title: 'Browse Local Surplus',
+    body: 'Restaurants and grocers list excess inventory at deep discounts.',
   },
   {
-    image: illustrationCustomer,
-    title: 'Browse selection',
-    body: 'Browse surplus meals and groceries from local restaurants near you at reduced prices.',
-    linkTo: '/browse',
-    linkLabel: 'Start browsing',
+    emoji: '🛍️',
+    title: 'Pick Up or Deliver',
+    body: 'Grab your order during the local window or get it delivered.',
   },
   {
-    image: illustrationApp,
-    title: 'Get easy access',
-    body: 'Browse, reserve, and pick up surplus food from restaurants and grocers in your area.',
-    linkTo: '/browse',
-    linkLabel: 'Get started',
+    emoji: '🌱',
+    title: 'Save Money & Reduce Waste',
+    body: 'Get high-quality food for cheap while keeping edible food out of landfills.',
   },
 ]
 
@@ -65,8 +45,84 @@ const footerBusinessLinks = [
   { label: 'Partner Central', to: '/doing-business' },
 ]
 
-const heroBackgroundImage =
-  'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=2400&q=80'
+type SplitSectionProps = {
+  title: string
+  body: string[]
+  image: { src: string; alt: string }
+  reverse?: boolean
+  className?: string
+}
+
+function SplitSection({
+  title,
+  body,
+  image,
+  reverse = false,
+  className = 'bg-white',
+}: SplitSectionProps) {
+  return (
+    <section className={`py-16 sm:py-20 ${className}`}>
+      <div className="mx-auto max-w-6xl px-6">
+        <h2 className="max-w-4xl text-3xl font-bold leading-tight tracking-tight text-black sm:text-4xl lg:text-5xl">
+          {title}
+        </h2>
+
+        <div
+          className={`mt-12 grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-14 ${
+            reverse ? 'lg:[&>*:first-child]:order-2 lg:[&>*:last-child]:order-1' : ''
+          }`}
+        >
+          <div className="space-y-5 text-base leading-relaxed text-black">
+            {body.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+          </div>
+
+          <div className="overflow-hidden rounded-2xl shadow-lg shadow-slate-200/60">
+            <img src={image.src} alt={image.alt} className="aspect-[4/3] h-full w-full object-cover" />
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+const wasteProblemSection = {
+  title: 'Without a better outlet, good food goes to waste.',
+  body: [
+    'Restaurants and grocers prepare more than they sell. At closing time, perfectly good meals, baked goods, and produce often get tossed—not because they\u2019re bad, but because there\u2019s no quick way to move them.',
+    'Meanwhile, shoppers pay full price on delivery apps or skip eating out altogether. FreshForward connects those two sides: surplus inventory listed locally, priced to move before it expires.',
+  ],
+  image: {
+    src: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&h=900&q=85',
+    alt: 'Fresh groceries and produce in a store',
+  },
+}
+
+const shopperValueSection = {
+  title: 'Surplus food near you, priced like a steal—not an afterthought.',
+  body: [
+    'Browse listings from restaurants and grocers in your area the same way you\u2019d scroll a marketplace: photos, pickup windows, and prices that reflect surplus—not shelf price.',
+    'Reserve what you want, pick it up on your schedule, and save money on food that would have gone unsold. It\u2019s full-quality inventory at a fraction of the usual cost.',
+  ],
+  image: {
+    src: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&h=900&q=85',
+    alt: 'Prepared meals and fresh food on a table',
+  },
+}
+
+const partnerSection = {
+  title: 'Turn unsold inventory into revenue—not trash bags.',
+  body: [
+    'List excess food in minutes: set your quantity, pickup window, and discount. FreshForward puts it in front of hungry customers nearby who are actively looking for deals.',
+    'You recover costs on food you already made or stocked. Customers get value. Less edible food ends up in landfills. Everyone wins.',
+  ],
+  reverse: true,
+  image: {
+    src: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1200&h=900&q=85',
+    alt: 'Restaurant kitchen preparing fresh food',
+  },
+}
 
 export default function Landing() {
   const [headerVisible, setHeaderVisible] = useState(false)
@@ -83,24 +139,24 @@ export default function Landing() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-white text-slate-800">
+    <div className="min-h-screen bg-white text-black">
       <header
         className={`fixed inset-x-0 top-0 z-50 border-b border-slate-100 bg-white shadow-sm transition-all duration-300 ${
           headerVisible ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-full opacity-0'
         }`}
       >
-        <div className="flex w-full items-center justify-between px-8 py-3 sm:px-12 lg:px-20 xl:px-28">
-          <Logo variant="dark" linkTo="/" iconOnly />
-          <div className="flex items-center gap-3 sm:gap-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-6 py-4">
+          <Logo variant="dark" linkTo="/" />
+          <div className="flex items-center gap-2 sm:gap-4">
             <Link
               to="/login"
-              className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+              className="rounded-lg px-3 py-2 text-sm font-semibold text-black transition-colors hover:bg-slate-50"
             >
               Sign In
             </Link>
             <Link
               to="/signup"
-              className="text-sm font-semibold text-slate-700 transition-colors hover:text-emerald-600"
+              className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
             >
               Sign Up
             </Link>
@@ -116,22 +172,26 @@ export default function Landing() {
         />
         <div
           aria-hidden
-          className="absolute inset-0 bg-gradient-to-b from-emerald-950/80 via-emerald-900/70 to-emerald-950/85"
+          className="absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(to right, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.5) 60%, rgba(0, 0, 0, 0.2) 100%)',
+          }}
         />
 
         <div className="relative z-10 flex flex-1 flex-col">
-          <div className="flex w-full items-center justify-between px-8 pt-6 sm:px-12 lg:px-20 xl:px-28">
-            <Logo variant="light" linkTo="/" iconOnly size="lg" />
+          <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 pt-6">
+            <Logo variant="light" linkTo="/" className="text-xl" />
             <div className="flex items-center gap-3 sm:gap-4">
               <Link
                 to="/login"
-                className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-50"
+                className="text-sm font-semibold text-white transition-colors hover:text-emerald-400"
               >
                 Sign In
               </Link>
               <Link
                 to="/signup"
-                className="text-sm font-semibold text-white transition-colors hover:text-emerald-100"
+                className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition-colors hover:bg-emerald-50"
               >
                 Sign Up
               </Link>
@@ -141,62 +201,81 @@ export default function Landing() {
           <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-6 pb-16 pt-10 text-center sm:pb-20">
             <Logo size="lg" variant="light" linkTo="/" />
 
-            <h1 className="mt-8 max-w-2xl text-3xl font-extrabold uppercase leading-tight tracking-tight text-white drop-shadow-sm sm:text-4xl lg:text-5xl">
-              Surplus food from local restaurants
+            <h1 className="mt-8 max-w-2xl text-3xl font-bold leading-tight tracking-tight text-white drop-shadow-sm sm:text-4xl lg:text-5xl">
+              Local surplus food &amp; groceries, heavily discounted.
             </h1>
-            <p className="mt-3 text-sm text-white/90 drop-shadow-sm">Curbside pickup in your area</p>
+            <p className="mt-4 max-w-xl text-base text-white/90 drop-shadow-sm sm:text-lg">
+              Save on fresh meals, baked goods, and produce from local spots nearby.
+            </p>
 
-            <HeroAddressSearch />
+            <HeroAddressSearch variant="hero" className="mt-8 max-w-xl" />
           </div>
         </div>
       </section>
 
-      <section className="border-b border-slate-100 bg-white">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-6 py-16 sm:grid-cols-3 sm:gap-8 sm:py-20 lg:px-10">
-          {audienceCards.map(({ image, title, body, linkTo, linkLabel }) => (
-            <div key={title} className="flex flex-col items-center text-center">
-              <div className="grid h-36 w-36 place-items-center rounded-full bg-slate-50">
-                <img src={image} alt="" className="h-24 w-24 object-contain" />
-              </div>
-              <h2 className="mt-6 text-xl font-bold text-slate-900">{title}</h2>
-              <p className="mt-3 max-w-xs text-sm leading-relaxed text-slate-500">{body}</p>
-              <Link
-                to={linkTo}
-                className="mt-5 inline-flex items-center gap-1 text-sm font-bold text-emerald-600 transition-colors hover:text-emerald-700"
+      <SplitSection {...wasteProblemSection} />
+
+      <section className="py-16 sm:py-20">
+        <div className="mx-auto max-w-6xl px-6">
+          <h2 className="text-center text-3xl font-bold text-black">How it works</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-black">
+            A simple way to find discounted surplus food from businesses near you.
+          </p>
+
+          <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+            {howItWorks.map(({ emoji, title, body }) => (
+              <article
+                key={title}
+                className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm"
               >
-                {linkLabel}
-                <IconArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          ))}
+                <span className="text-2xl" aria-hidden>
+                  {emoji}
+                </span>
+                <h3 className="mt-4 text-lg font-bold text-black">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-black">{body}</p>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
-      <section className="bg-white">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-6 py-16 sm:py-20 lg:grid-cols-2 lg:gap-16 lg:px-10">
-          <div>
-            <h2 className="text-3xl font-extrabold leading-tight text-slate-900 sm:text-4xl lg:text-5xl">
-              Everything you crave, delivered.
-            </h2>
-            <p className="mt-5 text-xl font-bold text-slate-900">Your favorite local restaurants</p>
-            <p className="mt-4 max-w-lg text-base leading-relaxed text-slate-600">
-              Get a prepared meal or fresh groceries from restaurants and grocers near you — surplus
-              inventory priced to move, ready for curbside pickup.
-            </p>
+      <SplitSection {...shopperValueSection} className="bg-[#F9FAFB]" />
+
+      <SplitSection {...partnerSection} />
+
+      <section className="bg-[#F9FAFB] py-16">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-6 md:grid-cols-2">
+          <article className="flex flex-col justify-between rounded-2xl border border-slate-100 bg-white p-8 shadow-sm">
+            <div>
+              <h3 className="text-xl font-bold text-black">
+                Hungry? Start exploring local deals near you.
+              </h3>
+              <p className="mt-2 text-sm text-black">
+                Browse surplus meals and groceries listed by restaurants and grocers in your area.
+              </p>
+            </div>
             <Link
               to="/browse"
-              className="mt-8 inline-flex items-center rounded-full bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-emerald-700"
+              className="mt-6 inline-flex w-fit rounded-full bg-emerald-600 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-emerald-700"
             >
-              Browse near you
+              Browse Deals
             </Link>
-          </div>
-          <div className="flex justify-center lg:justify-end">
-            <img
-              src={illustrationCustomer}
-              alt=""
-              className="h-auto w-full max-w-md object-contain"
-            />
-          </div>
+          </article>
+
+          <article className="flex flex-col justify-between rounded-2xl border border-slate-100 bg-white p-8 shadow-sm">
+            <div>
+              <h3 className="text-xl font-bold text-black">Have surplus inventory?</h3>
+              <p className="mt-2 text-sm text-black">
+                List excess food, set your pickup window, and turn waste into revenue.
+              </p>
+            </div>
+            <Link
+              to="/restaurant/apply"
+              className="mt-6 inline-flex w-fit rounded-full border border-emerald-600 px-6 py-3 text-sm font-bold text-emerald-700 transition-colors hover:bg-emerald-50"
+            >
+              Partner With Us
+            </Link>
+          </article>
         </div>
       </section>
 

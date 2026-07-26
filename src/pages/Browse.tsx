@@ -1604,7 +1604,7 @@ function AddressDropdown({
                   type="button"
                   onClick={onUseLocation}
                   disabled={locationLoading}
-                  className={`flex w-full items-start gap-3 border-t border-gray-100 px-4 py-3 text-left disabled:opacity-60 ${textButtonHover}`}
+                  className={`flex w-full cursor-pointer items-start gap-3 border-t border-gray-100 px-4 py-3 text-left disabled:cursor-not-allowed disabled:opacity-60 ${textButtonHover}`}
                 >
                   <IconGpsTarget className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
                   <div className="min-w-0">
