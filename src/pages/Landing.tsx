@@ -13,6 +13,8 @@ const heroOverlayGradient = [
   'linear-gradient(to right, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.65) 45%, rgba(0, 0, 0, 0.25) 100%)',
 ].join(', ')
 
+const howItWorksMapImage = '/how-it-works-map.jpg'
+
 const howItWorks = [
   {
     emoji: '🔍',
@@ -47,12 +49,12 @@ function HowItWorksCard({
   onAction: (item: HowItWorksItem) => void
 }) {
   return (
-    <article className="flex flex-col rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+    <article className="flex flex-col rounded-2xl border border-white/10 bg-black/55 p-6 backdrop-blur-sm">
       <span className="text-2xl" aria-hidden>
         {item.emoji}
       </span>
-      <h3 className="mt-4 text-lg font-bold text-black">{item.title}</h3>
-      <p className="mt-2 flex-1 text-sm leading-relaxed text-black">{item.body}</p>
+      <h3 className="mt-4 text-lg font-bold text-white">{item.title}</h3>
+      <p className="mt-2 flex-1 text-sm leading-relaxed text-white">{item.body}</p>
       <button
         type="button"
         onClick={() => onAction(item)}
@@ -278,12 +280,20 @@ export default function Landing() {
 
       <SplitSection {...wasteProblemSection} />
 
-      <section className="py-16 sm:py-20">
-        <div className="mx-auto max-w-6xl px-6">
-          <h2 className="text-center text-3xl font-bold leading-tight tracking-tight text-black sm:text-4xl lg:text-5xl">
+      <section className="relative isolate overflow-hidden py-16 sm:min-h-[36rem] sm:py-20">
+        <div aria-hidden className="how-it-works-map-wrap">
+          <img src={howItWorksMapImage} alt="" className="how-it-works-map-image" />
+        </div>
+        <div
+          aria-hidden
+          className="absolute inset-0 z-[1] bg-gradient-to-b from-black/55 via-black/40 to-black/50"
+        />
+
+        <div className="relative z-10 mx-auto max-w-6xl px-6">
+          <h2 className="text-center text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">
             How it works
           </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-center text-black">
+          <p className="mx-auto mt-3 max-w-2xl text-center text-white/90">
             Find discounted surplus food from businesses near you.
           </p>
 
