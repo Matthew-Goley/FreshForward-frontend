@@ -1999,11 +1999,7 @@ export default function Browse() {
             </Link>
             <Link
               to="/signup"
-              className={`hidden rounded-lg px-3.5 py-1.5 text-sm font-semibold shadow-sm transition-colors sm:inline ${
-                headerScrolled
-                  ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                  : 'bg-white text-emerald-700 hover:bg-emerald-50'
-              }`}
+              className="hidden rounded-lg bg-emerald-600 px-3.5 py-1.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 sm:inline"
             >
               Sign Up
             </Link>

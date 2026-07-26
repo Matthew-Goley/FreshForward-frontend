@@ -1,28 +1,74 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Logo from '../components/Logo'
 import HeroAddressSearch from '../components/HeroAddressSearch'
+import { useApp } from '../lib/AppContext'
+import type { AccountType } from '../types'
 
 const heroBackgroundImage =
-  'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=2400&q=85'
+  'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=2400&h=1350&q=85'
+
+const heroBackgroundPosition = '88% center'
+
+const heroOverlayGradient = [
+  'radial-gradient(ellipse 85% 75% at 50% 42%, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0.55) 42%, transparent 72%)',
+  'linear-gradient(to right, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.65) 45%, rgba(0, 0, 0, 0.25) 100%)',
+].join(', ')
 
 const howItWorks = [
   {
     emoji: '🔍',
     title: 'Browse Local Surplus',
     body: 'Restaurants and grocers list excess inventory at deep discounts.',
+    buttonLabel: 'Browse Now',
+    href: '/browse',
   },
   {
-    emoji: '🛍️',
-    title: 'Pick Up or Deliver',
-    body: 'Grab your order during the local window or get it delivered.',
+    emoji: '🤝',
+    title: 'Partner with Us',
+    body: 'Restaurants and vendors list surplus food, set pickup windows, and reach customers looking for deals.',
+    buttonLabel: 'Partner With Us',
+    href: '/restaurant/apply',
   },
   {
     emoji: '🌱',
     title: 'Save Money & Reduce Waste',
     body: 'Get high-quality food for cheap while keeping edible food out of landfills.',
+    buttonLabel: 'Get Started',
+    href: '/browse',
+    requiresAuth: true,
+    signupAccountType: 'customer' as AccountType,
   },
 ]
+
+type HowItWorksItem = (typeof howItWorks)[number]
+
+function HowItWorksCard({
+  item,
+  isLoggedIn,
+  onAction,
+}: {
+  item: HowItWorksItem
+  isLoggedIn: boolean
+  onAction: (item: HowItWorksItem) => void
+}) {
+  return (
+    <article className="flex flex-col rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+      <span className="text-2xl" aria-hidden>
+        {item.emoji}
+      </span>
+      <h3 className="mt-4 text-lg font-bold text-black">{item.title}</h3>
+      <p className="mt-2 flex-1 text-sm leading-relaxed text-black">{item.body}</p>
+      <button
+        type="button"
+        onClick={() => onAction(item)}
+        className="mt-6 inline-flex w-fit cursor-pointer rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-emerald-700"
+      >
+        {item.requiresAuth && !isLoggedIn ? 'Sign Up to Continue' : item.buttonLabel}
+      </button>
+    </article>
+  )
+}
 
 const footerCategories = [
   { label: 'Grocery', id: 'grocery' },
@@ -125,8 +171,23 @@ const partnerSection = {
 }
 
 export default function Landing() {
+  const { currentUser } = useApp()
+  const navigate = useNavigate()
   const [headerVisible, setHeaderVisible] = useState(false)
   const heroRef = useRef<HTMLElement>(null)
+
+  function handleHowItWorksAction(item: HowItWorksItem) {
+    if (item.requiresAuth && !currentUser) {
+      navigate('/signup', {
+        state: {
+          redirectTo: item.href,
+          accountType: item.signupAccountType ?? 'customer',
+        },
+      })
+      return
+    }
+    navigate(item.href)
+  }
 
   useEffect(() => {
     const hero = heroRef.current
@@ -167,21 +228,21 @@ export default function Landing() {
       <section ref={heroRef} className="relative flex min-h-[88vh] flex-col overflow-hidden">
         <div
           aria-hidden
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${heroBackgroundImage})` }}
+          className="absolute inset-0 bg-cover bg-no-repeat"
+          style={{
+            backgroundImage: `url(${heroBackgroundImage})`,
+            backgroundPosition: heroBackgroundPosition,
+          }}
         />
         <div
           aria-hidden
           className="absolute inset-0"
-          style={{
-            background:
-              'linear-gradient(to right, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.5) 60%, rgba(0, 0, 0, 0.2) 100%)',
-          }}
+          style={{ background: heroOverlayGradient }}
         />
 
         <div className="relative z-10 flex flex-1 flex-col">
           <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 pt-6">
-            <Logo variant="light" linkTo="/" className="text-xl" />
+            <Logo variant="brand" linkTo="/" className="text-xl" />
             <div className="flex items-center gap-3 sm:gap-4">
               <Link
                 to="/login"
@@ -191,7 +252,7 @@ export default function Landing() {
               </Link>
               <Link
                 to="/signup"
-                className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition-colors hover:bg-emerald-50"
+                className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
               >
                 Sign Up
               </Link>
@@ -199,7 +260,7 @@ export default function Landing() {
           </div>
 
           <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-6 pb-16 pt-10 text-center sm:pb-20">
-            <Logo size="lg" variant="light" linkTo="/" />
+            <Logo size="lg" variant="brand" linkTo="/" />
 
             <h1 className="mt-8 max-w-2xl text-3xl font-bold leading-tight tracking-tight text-white drop-shadow-sm sm:text-4xl lg:text-5xl">
               Local surplus food &amp; groceries, heavily discounted.
@@ -223,17 +284,13 @@ export default function Landing() {
           </p>
 
           <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
-            {howItWorks.map(({ emoji, title, body }) => (
-              <article
-                key={title}
-                className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm"
-              >
-                <span className="text-2xl" aria-hidden>
-                  {emoji}
-                </span>
-                <h3 className="mt-4 text-lg font-bold text-black">{title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-black">{body}</p>
-              </article>
+            {howItWorks.map((item) => (
+              <HowItWorksCard
+                key={item.title}
+                item={item}
+                isLoggedIn={Boolean(currentUser)}
+                onAction={handleHowItWorksAction}
+              />
             ))}
           </div>
         </div>
