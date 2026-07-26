@@ -34,7 +34,7 @@ const howItWorks = [
     emoji: '🌱',
     title: 'Save Money & Reduce Waste',
     body: 'Get great food for cheap while keeping edible food out of landfills.',
-    buttonLabel: 'About Us',
+    buttonLabel: 'Learn More',
     href: '/company',
   },
 ]
@@ -151,7 +151,7 @@ function SplitSection({
 const wasteProblemSection = {
   title: 'Without a better outlet, good food goes to waste.',
   body: [
-    'Restaurants and grocers toss good meals, baked goods, and produce at closing, not because they went bad, but because there is no fast way to sell what is left.',
+    'Restaurants and grocers toss leftover food and groceries at closing, not because they went bad, but because there is no fast way to sell what is left.',
   ],
   image: {
     src: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&h=900&q=85',
@@ -270,7 +270,7 @@ export default function Landing() {
               Local surplus food &amp; groceries, heavily discounted.
             </h1>
             <p className="mt-4 max-w-xl text-base text-white/90 drop-shadow-sm sm:text-lg">
-              Save on fresh meals, baked goods, and produce from local spots nearby.
+              Save on meals, groceries, and produce from local spots nearby.
             </p>
 
             <HeroAddressSearch variant="hero" className="mt-8 max-w-xl" />
