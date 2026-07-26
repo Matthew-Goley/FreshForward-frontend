@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent, type SVGProps } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import Logo from '../components/Logo'
 import illustrationCustomer from '../assets/landing/illustration-customer.png'
 import illustrationPartner from '../assets/landing/illustration-partner.png'
 import illustrationApp from '../assets/landing/illustration-app.png'
@@ -18,24 +19,6 @@ function IconArrowRight(props: SVGProps<SVGSVGElement>) {
     <svg viewBox="0 0 20 20" fill="none" {...props}>
       <path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
     </svg>
-  )
-}
-
-function Logo({ className = '', size = 'sm', dark = false }: { className?: string; size?: 'sm' | 'lg'; dark?: boolean }) {
-  const iconSize = size === 'lg' ? 40 : 28
-  const iconFill = dark ? '#059669' : '#ffffff'
-  return (
-    <span className={`inline-flex items-center gap-2.5 ${className}`}>
-      <svg width={iconSize} height={iconSize} viewBox="0 0 26 26" fill="none" aria-hidden="true" className="shrink-0">
-        <rect x="1" y="8.5" width="9.5" height="9.5" rx="2" transform="rotate(-45 5.75 13.25)" fill={iconFill} />
-        <rect x="10.2" y="3.2" width="9.5" height="9.5" rx="2" transform="rotate(-45 14.95 7.95)" fill={iconFill} fillOpacity={0.6} />
-      </svg>
-      <span
-        className={`${size === 'lg' ? 'text-3xl' : 'text-xl'} font-bold tracking-tight ${dark ? 'text-slate-900' : 'text-white'}`}
-      >
-        FreshForward
-      </span>
-    </span>
   )
 }
 
@@ -135,7 +118,7 @@ export default function Landing() {
       >
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-6 py-3 sm:gap-6 sm:px-10 lg:px-14">
           <Link to="/" aria-label="FreshForward home" className="shrink-0">
-            <Logo dark />
+            <Logo variant="dark" />
           </Link>
 
           <form onSubmit={handleSearch} className="min-w-0 max-w-md flex-1">

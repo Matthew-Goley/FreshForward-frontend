@@ -1,0 +1,70 @@
+import { Link } from 'react-router-dom'
+
+type LogoProps = {
+  className?: string
+  size?: 'sm' | 'lg'
+  variant?: 'light' | 'dark'
+  linkTo?: string
+}
+
+export default function Logo({
+  className = '',
+  size = 'sm',
+  variant = 'light',
+  linkTo,
+}: LogoProps) {
+  const iconSize = size === 'lg' ? 40 : 28
+  const iconFill = variant === 'dark' ? '#059669' : '#ffffff'
+
+  const content = (
+    <>
+      <svg
+        width={iconSize}
+        height={iconSize}
+        viewBox="0 0 26 26"
+        fill="none"
+        aria-hidden="true"
+        className="shrink-0"
+      >
+        <rect
+          x="1"
+          y="8.5"
+          width="9.5"
+          height="9.5"
+          rx="2"
+          transform="rotate(-45 5.75 13.25)"
+          fill={iconFill}
+        />
+        <rect
+          x="10.2"
+          y="3.2"
+          width="9.5"
+          height="9.5"
+          rx="2"
+          transform="rotate(-45 14.95 7.95)"
+          fill={iconFill}
+          fillOpacity={0.6}
+        />
+      </svg>
+      <span
+        className={`${size === 'lg' ? 'text-3xl' : 'text-xl'} font-bold tracking-tight ${
+          variant === 'dark' ? 'text-slate-900' : 'text-white'
+        }`}
+      >
+        FreshForward
+      </span>
+    </>
+  )
+
+  const wrapperClass = `inline-flex items-center gap-2.5 ${className}`
+
+  if (linkTo) {
+    return (
+      <Link to={linkTo} className={wrapperClass}>
+        {content}
+      </Link>
+    )
+  }
+
+  return <span className={wrapperClass}>{content}</span>
+}
