@@ -1,69 +1,49 @@
-import { useEffect, useRef, useState, type FormEvent, type SVGProps } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState, type SVGProps } from 'react'
+import { Link } from 'react-router-dom'
 import Logo from '../components/Logo'
+import HeroAddressSearch from '../components/HeroAddressSearch'
 import illustrationCustomer from '../assets/landing/illustration-customer.png'
 import illustrationPartner from '../assets/landing/illustration-partner.png'
 import illustrationApp from '../assets/landing/illustration-app.png'
 
-function IconSearch(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" {...props}>
-      <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth={1.8} />
-      <path d="m18 18-4.35-4.35" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
-    </svg>
-  )
-}
-
 function IconArrowRight(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 20 20" fill="none" {...props}>
-      <path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M4 10h12M11 5l5 5-5 5"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   )
 }
 
 const audienceCards = [
   {
-    image: illustrationCustomer,
-    title: 'Browse selection',
-    body: 'Browse surplus meals and groceries from local restaurants near you, priced up to 70% off.',
-    linkTo: '/browse',
-    linkLabel: 'Start browsing',
-  },
-  {
     image: illustrationPartner,
     title: 'Become a partner',
-    body: 'Turn unsold inventory into revenue instead of the dumpster. Set your own price and pickup window.',
+    body: 'Turn unsold inventory into revenue instead of waste. Set your own price and pickup window.',
     linkTo: '/restaurant/apply',
     linkLabel: 'Apply to list',
   },
   {
+    image: illustrationCustomer,
+    title: 'Browse selection',
+    body: 'Browse surplus meals and groceries from local restaurants near you at reduced prices.',
+    linkTo: '/browse',
+    linkLabel: 'Start browsing',
+  },
+  {
     image: illustrationApp,
     title: 'Get easy access',
-    body: 'The FreshForward app is on the way. Browse, reserve, and get notified the moment new surplus drops.',
+    body: 'Browse, reserve, and pick up surplus food from restaurants and grocers in your area.',
     linkTo: '/browse',
-    linkLabel: 'Get the app',
-    // No app exists yet, so this card is held back from rendering below.
-    // Kept in the data (not deleted) so it's a one-line flip once there is one.
-    enabled: false,
+    linkLabel: 'Get started',
   },
 ]
 
-// Names drawn from the same vendor list already used in Browse.tsx's product
-// catalog, deliberately excluding real chains that also appear there
-// (ALDI, Chipotle, Whole Foods, etc.) since listing those here would imply
-// a partnership that doesn't exist.
-const partners = ['Parisian Bakery', 'Local Harvest Co.', 'Curry House', 'Harbor Fish Market', 'Bodega Express', 'CookUnity']
-
-const stats = [
-  { value: '1,180 lbs', label: 'Food rescued this month' },
-  { value: '$14,900', label: 'Saved by customers' },
-  { value: '38', label: 'Restaurants live on FreshForward' },
-]
-
-// Same category set and ids as Browse.tsx's sidebar, minus "Home". Kept in
-// sync rather than inventing a separate list. The `id` matches Browse.tsx's
-// SidebarCategoryId exactly so the ?category= link lands on the right tab.
 const footerCategories = [
   { label: 'Grocery', id: 'grocery' },
   { label: 'Vegan', id: 'vegan' },
@@ -74,30 +54,24 @@ const footerCategories = [
   { label: 'Deals', id: 'deals' },
 ]
 
-// All point at the same /company skeleton page for now, until each gets its
-// own real page.
-const footerCompanyLinks = ['About Us', 'Careers', 'Contact Us', 'Our Team', 'Company Blog']
+const footerCompanyLinks = [
+  { label: 'About Us', to: '/company' },
+  { label: 'Careers', to: '/company' },
+  { label: 'Contact Us', to: '/company' },
+]
 
 const footerBusinessLinks = [
   { label: 'Become a Partner', to: '/restaurant/apply' },
   { label: 'Partner Central', to: '/doing-business' },
-  { label: 'Promotions', to: '/doing-business' },
 ]
 
+const heroBackgroundImage =
+  'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=2400&q=80'
+
 export default function Landing() {
-  const [zip, setZip] = useState('')
-  const [topSearchQuery, setTopSearchQuery] = useState('')
   const [headerVisible, setHeaderVisible] = useState(false)
-  const navigate = useNavigate()
   const heroRef = useRef<HTMLElement>(null)
 
-  function handleSearch(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    navigate('/browse')
-  }
-
-  // Same scroll-driven header pattern Browse.tsx uses, adapted for normal
-  // document scrolling (Landing doesn't use Browse's custom scroll container).
   useEffect(() => {
     const hero = heroRef.current
     if (!hero) return
@@ -110,41 +84,23 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-white text-slate-800">
-      {/* Sticky top bar: hidden while the hero (which has its own logo + auth row) is in view, slides in once scrolled past it */}
       <header
         className={`fixed inset-x-0 top-0 z-50 border-b border-slate-100 bg-white shadow-sm transition-all duration-300 ${
           headerVisible ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-full opacity-0'
         }`}
       >
-        <div className="mx-auto flex max-w-7xl items-center gap-4 px-6 py-3 sm:gap-6 sm:px-10 lg:px-14">
-          <Link to="/" aria-label="FreshForward home" className="shrink-0">
-            <Logo variant="dark" />
-          </Link>
-
-          <form onSubmit={handleSearch} className="min-w-0 max-w-md flex-1">
-            <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 py-1.5 pl-4 pr-1.5">
-              <IconSearch className="h-4 w-4 shrink-0 text-slate-400" />
-              <input
-                type="text"
-                value={topSearchQuery}
-                onChange={(e) => setTopSearchQuery(e.target.value)}
-                placeholder="Search FreshForward..."
-                aria-label="Search FreshForward"
-                className="min-w-0 flex-1 border-none bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
-              />
-            </div>
-          </form>
-
-          <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
+        <div className="flex w-full items-center justify-between px-8 py-3 sm:px-12 lg:px-20 xl:px-28">
+          <Logo variant="dark" linkTo="/" iconOnly />
+          <div className="flex items-center gap-3 sm:gap-4">
             <Link
               to="/login"
-              className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 sm:px-4"
+              className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
             >
               Sign In
             </Link>
             <Link
               to="/signup"
-              className="rounded-lg bg-emerald-600 px-3.5 py-1.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 sm:px-4"
+              className="text-sm font-semibold text-slate-700 transition-colors hover:text-emerald-600"
             >
               Sign Up
             </Link>
@@ -152,163 +108,114 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* Hero */}
-      <section ref={heroRef} className="relative overflow-hidden bg-emerald-600">
-        <div aria-hidden className="pointer-events-none absolute -left-20 -top-20 h-56 w-56 rounded-full bg-white/10" />
-        <div aria-hidden className="pointer-events-none absolute -bottom-24 right-[10%] h-72 w-72 rounded-full bg-white/10" />
-        <div aria-hidden className="pointer-events-none absolute right-1/3 top-8 h-24 w-24 rounded-full bg-white/10" />
+      <section ref={heroRef} className="relative flex min-h-[88vh] flex-col overflow-hidden">
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${heroBackgroundImage})` }}
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-gradient-to-b from-emerald-950/80 via-emerald-900/70 to-emerald-950/85"
+        />
 
-        {/* Top bar: logo left, auth actions right. One seamless row, no separate nav underneath */}
-        <div className="relative mx-auto flex max-w-7xl items-center justify-between px-6 pt-6 sm:px-10 lg:px-14">
-          <Link to="/" aria-label="FreshForward home">
-            <Logo />
-          </Link>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Link
-              to="/login"
-              className="rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/15 sm:px-4"
-            >
-              Sign In
-            </Link>
-            <Link
-              to="/signup"
-              className="rounded-lg bg-white px-3.5 py-1.5 text-sm font-semibold text-emerald-700 shadow-sm transition-colors hover:bg-emerald-50 sm:px-4"
-            >
-              Sign Up
-            </Link>
-          </div>
-        </div>
-
-        {/* Main hero graphic: logo mark, slogan, search bar */}
-        <div className="relative mx-auto flex max-w-3xl flex-col items-center px-6 py-20 text-center sm:py-28">
-          <Logo size="lg" />
-          <h1 className="mt-6 max-w-2xl text-3xl font-bold leading-snug tracking-tight text-white sm:text-4xl lg:text-5xl">
-            Food,{' '}
-            <span className="font-['Dancing_Script',cursive] text-4xl font-bold text-emerald-100 sm:text-5xl lg:text-6xl">
-              finally
-            </span>{' '}
-            affordable.
-          </h1>
-          <p className="mt-5 max-w-xl text-emerald-50/90">
-            Browse surplus food from restaurants and grocers near you. Order in seconds, pick up curbside.
-          </p>
-
-          <form
-            onSubmit={handleSearch}
-            className="mt-9 flex w-full max-w-md items-center gap-2 rounded-full bg-white p-1.5 pl-5 shadow-lg shadow-emerald-900/20"
-          >
-            <IconSearch className="h-4 w-4 shrink-0 text-slate-400" />
-            <input
-              type="text"
-              value={zip}
-              onChange={(e) => setZip(e.target.value)}
-              placeholder="Enter your zip code"
-              aria-label="Enter your zip code"
-              className="min-w-0 flex-1 border-none bg-transparent py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400"
-            />
-            <button
-              type="submit"
-              aria-label="Find food near you"
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-600 text-white transition-colors hover:bg-emerald-700"
-            >
-              <IconArrowRight className="h-4 w-4" />
-            </button>
-          </form>
-
-          <Link
-            to="/browse"
-            className="mt-4 text-sm font-medium text-emerald-50/90 underline decoration-emerald-200/50 underline-offset-4 hover:text-white"
-          >
-            or browse everything near you →
-          </Link>
-        </div>
-      </section>
-
-      {/* Partners */}
-      <section className="border-t border-slate-100 bg-slate-50">
-        <div className="mx-auto max-w-6xl px-6 pt-14">
-          <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-            Trusted by local restaurants &amp; grocers
-          </p>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
-            {partners.map((name) => (
-              <span key={name} className="text-lg font-bold text-slate-400">
-                {name}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Statistics */}
-        <div className="mx-auto max-w-4xl px-6 py-14">
-          <div className="grid grid-cols-1 gap-8 border-t border-slate-200 pt-10 sm:grid-cols-3">
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="font-mono text-3xl font-bold text-emerald-600 sm:text-4xl">{stat.value}</p>
-                <p className="mt-1 text-sm text-slate-500">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-          <p className="mt-6 text-center text-xs text-slate-400">Concept figures for this preview, not live data.</p>
-        </div>
-      </section>
-
-      {/* Each widget gets its own full section, alternating layout. Mirrors DoorDash's "Become a Dasher" banner treatment */}
-      {audienceCards
-        .filter((card) => card.enabled !== false)
-        .map(({ image, title, body, linkTo, linkLabel }, i) => (
-        <section key={title} className={i % 2 === 1 ? 'bg-slate-50' : 'bg-white'}>
-          <div
-            className={`mx-auto flex max-w-5xl flex-col items-center gap-10 px-6 py-16 sm:py-20 ${
-              i % 2 === 1 ? 'sm:flex-row-reverse' : 'sm:flex-row'
-            }`}
-          >
-            <img src={image} alt="" className="h-56 w-56 shrink-0 object-contain sm:h-64 sm:w-64" />
-            <div className="text-center sm:text-left">
-              <h2 className="text-2xl font-bold leading-snug text-slate-900 sm:text-3xl">{title}</h2>
-              <p className="mt-3 max-w-sm text-slate-500">{body}</p>
+        <div className="relative z-10 flex flex-1 flex-col">
+          <div className="flex w-full items-center justify-between px-8 pt-6 sm:px-12 lg:px-20 xl:px-28">
+            <Logo variant="light" linkTo="/" iconOnly size="lg" />
+            <div className="flex items-center gap-3 sm:gap-4">
               <Link
-                to={linkTo}
-                className="mt-6 inline-flex items-center rounded-full bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-emerald-700"
+                to="/login"
+                className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-50"
               >
-                {linkLabel}
+                Sign In
+              </Link>
+              <Link
+                to="/signup"
+                className="text-sm font-semibold text-white transition-colors hover:text-emerald-100"
+              >
+                Sign Up
               </Link>
             </div>
           </div>
-        </section>
-      ))}
 
-      {/* Minimal closing banner */}
-      <section className="bg-emerald-600">
-        <div className="mx-auto max-w-3xl px-6 py-16 text-center sm:py-20">
-          <h2 className="text-2xl font-bold text-white sm:text-3xl">Ready to eat well for less?</h2>
-          <p className="mt-3 text-emerald-50/90">Create a free account and start saving on your first order today.</p>
-          <Link
-            to="/signup"
-            className="mt-6 inline-flex items-center rounded-full bg-white px-6 py-3 text-sm font-bold text-emerald-700 shadow-sm transition-colors hover:bg-emerald-50"
-          >
-            Sign up free
-          </Link>
+          <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-6 pb-16 pt-10 text-center sm:pb-20">
+            <Logo size="lg" variant="light" linkTo="/" />
+
+            <h1 className="mt-8 max-w-2xl text-3xl font-extrabold uppercase leading-tight tracking-tight text-white drop-shadow-sm sm:text-4xl lg:text-5xl">
+              Surplus food from local restaurants
+            </h1>
+            <p className="mt-3 text-sm text-white/90 drop-shadow-sm">Curbside pickup in your area</p>
+
+            <HeroAddressSearch />
+          </div>
         </div>
       </section>
 
-      {/* Footer */}
+      <section className="border-b border-slate-100 bg-white">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-6 py-16 sm:grid-cols-3 sm:gap-8 sm:py-20 lg:px-10">
+          {audienceCards.map(({ image, title, body, linkTo, linkLabel }) => (
+            <div key={title} className="flex flex-col items-center text-center">
+              <div className="grid h-36 w-36 place-items-center rounded-full bg-slate-50">
+                <img src={image} alt="" className="h-24 w-24 object-contain" />
+              </div>
+              <h2 className="mt-6 text-xl font-bold text-slate-900">{title}</h2>
+              <p className="mt-3 max-w-xs text-sm leading-relaxed text-slate-500">{body}</p>
+              <Link
+                to={linkTo}
+                className="mt-5 inline-flex items-center gap-1 text-sm font-bold text-emerald-600 transition-colors hover:text-emerald-700"
+              >
+                {linkLabel}
+                <IconArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-white">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-6 py-16 sm:py-20 lg:grid-cols-2 lg:gap-16 lg:px-10">
+          <div>
+            <h2 className="text-3xl font-extrabold leading-tight text-slate-900 sm:text-4xl lg:text-5xl">
+              Everything you crave, delivered.
+            </h2>
+            <p className="mt-5 text-xl font-bold text-slate-900">Your favorite local restaurants</p>
+            <p className="mt-4 max-w-lg text-base leading-relaxed text-slate-600">
+              Get a prepared meal or fresh groceries from restaurants and grocers near you — surplus
+              inventory priced to move, ready for curbside pickup.
+            </p>
+            <Link
+              to="/browse"
+              className="mt-8 inline-flex items-center rounded-full bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-emerald-700"
+            >
+              Browse near you
+            </Link>
+          </div>
+          <div className="flex justify-center lg:justify-end">
+            <img
+              src={illustrationCustomer}
+              alt=""
+              className="h-auto w-full max-w-md object-contain"
+            />
+          </div>
+        </div>
+      </section>
+
       <footer className="bg-black text-neutral-400">
         <div className="mx-auto max-w-6xl px-6 py-16">
           <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-4">
             <div className="col-span-2 sm:col-span-1">
-              <Logo />
+              <Logo variant="light" linkTo="/" />
               <p className="mt-4 max-w-xs text-sm text-neutral-400">
-                Surplus food from local restaurants and grocers, priced to move. Curbside pickup only.
+                Surplus food from local restaurants and grocers. Curbside pickup only.
               </p>
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold text-white">Popular Categories</h3>
+              <h3 className="text-sm font-semibold text-white">Categories</h3>
               <ul className="mt-4 space-y-2.5 text-sm">
                 {footerCategories.map(({ label, id }) => (
                   <li key={id}>
-                    <Link to={`/browse?category=${id}`} className="text-neutral-400 transition-colors hover:text-white">
+                    <Link to={`/browse?category=${id}`} className="transition-colors hover:text-white">
                       {label}
                     </Link>
                   </li>
@@ -319,9 +226,9 @@ export default function Landing() {
             <div>
               <h3 className="text-sm font-semibold text-white">Company</h3>
               <ul className="mt-4 space-y-2.5 text-sm">
-                {footerCompanyLinks.map((label) => (
+                {footerCompanyLinks.map(({ label, to }) => (
                   <li key={label}>
-                    <Link to="/company" className="text-neutral-400 transition-colors hover:text-white">
+                    <Link to={to} className="transition-colors hover:text-white">
                       {label}
                     </Link>
                   </li>
@@ -334,15 +241,9 @@ export default function Landing() {
               <ul className="mt-4 space-y-2.5 text-sm">
                 {footerBusinessLinks.map(({ label, to }) => (
                   <li key={label}>
-                    {to === '#' ? (
-                      <a href="#" className="text-neutral-400 transition-colors hover:text-white">
-                        {label}
-                      </a>
-                    ) : (
-                      <Link to={to} className="text-neutral-400 transition-colors hover:text-white">
-                        {label}
-                      </Link>
-                    )}
+                    <Link to={to} className="transition-colors hover:text-white">
+                      {label}
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -350,17 +251,14 @@ export default function Landing() {
           </div>
 
           <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-neutral-800 pt-8 text-xs text-neutral-500 sm:flex-row">
-            <p>© {new Date().getFullYear()} FreshForward.</p>
+            <p>&copy; {new Date().getFullYear()} FreshForward.</p>
             <div className="flex items-center gap-5">
-              <Link to="/privacy" className="text-neutral-400 transition-colors hover:text-white">
+              <Link to="/privacy" className="transition-colors hover:text-white">
                 Privacy
               </Link>
-              <Link to="/terms" className="text-neutral-400 transition-colors hover:text-white">
+              <Link to="/terms" className="transition-colors hover:text-white">
                 Terms
               </Link>
-              <a href="#" className="text-neutral-400 transition-colors hover:text-white">
-                LinkedIn
-              </a>
             </div>
           </div>
         </div>
