@@ -20,7 +20,7 @@ export default function RestaurantApply() {
   if (submitted) {
     return (
       <div className="mx-auto max-w-sm px-4 py-8">
-        <p className="border border-gray-400 px-4 py-3">Application submitted — pending approval</p>
+        <p className="border border-gray-400 px-4 py-3">Application submitted. Pending approval.</p>
       </div>
     )
   }

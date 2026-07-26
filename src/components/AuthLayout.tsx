@@ -29,7 +29,7 @@ export default function AuthLayout({ title, subtitle, children, footer }: AuthLa
             </p>
             <p className="mt-6 text-sm leading-relaxed text-emerald-100/90">
               FreshForward connects you with local restaurants offering surplus meals at a
-              discount — less waste, more flavor.
+              discount. Less waste, more flavor.
             </p>
           </div>
 

@@ -33,7 +33,7 @@ const howItWorks = [
   {
     emoji: '🌱',
     title: 'Save Money & Reduce Waste',
-    body: 'Get high-quality food for cheap while keeping edible food out of landfills.',
+    body: 'Get great food for cheap while keeping edible food out of landfills.',
     buttonLabel: 'Get Started',
     href: '/browse',
     requiresAuth: true,
@@ -136,7 +136,7 @@ function SplitSection({
 const wasteProblemSection = {
   title: 'Without a better outlet, good food goes to waste.',
   body: [
-    'Restaurants and grocers prepare more than they sell. At closing time, perfectly good meals, baked goods, and produce often get tossed—not because they\u2019re bad, but because there\u2019s no quick way to move them.',
+    'Restaurants and grocers prepare more than they sell. At closing time, perfectly good meals, baked goods, and produce often get tossed, not because they\u2019re bad, but because there\u2019s no quick way to move them.',
     'Meanwhile, shoppers pay full price on delivery apps or skip eating out altogether. FreshForward connects those two sides: surplus inventory listed locally, priced to move before it expires.',
   ],
   image: {
@@ -146,10 +146,10 @@ const wasteProblemSection = {
 }
 
 const shopperValueSection = {
-  title: 'Surplus food near you, priced like a steal—not an afterthought.',
+  title: 'Surplus food near you, priced like a steal.',
   body: [
-    'Browse listings from restaurants and grocers in your area the same way you\u2019d scroll a marketplace: photos, pickup windows, and prices that reflect surplus—not shelf price.',
-    'Reserve what you want, pick it up on your schedule, and save money on food that would have gone unsold. It\u2019s full-quality inventory at a fraction of the usual cost.',
+    'Browse listings from restaurants and grocers in your area the same way you\u2019d scroll a marketplace: photos, pickup windows, and prices that reflect surplus, not shelf price.',
+    'Reserve what you want, pick it up on your schedule, and save money on food that would have gone unsold. It\u2019s the same quality inventory at a fraction of the usual cost.',
   ],
   image: {
     src: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&h=900&q=85',
@@ -158,7 +158,7 @@ const shopperValueSection = {
 }
 
 const partnerSection = {
-  title: 'Turn unsold inventory into revenue—not trash bags.',
+  title: 'Turn unsold inventory into revenue, not trash bags.',
   body: [
     'List excess food in minutes: set your quantity, pickup window, and discount. FreshForward puts it in front of hungry customers nearby who are actively looking for deals.',
     'You recover costs on food you already made or stocked. Customers get value. Less edible food ends up in landfills. Everyone wins.',
@@ -278,7 +278,9 @@ export default function Landing() {
 
       <section className="py-16 sm:py-20">
         <div className="mx-auto max-w-6xl px-6">
-          <h2 className="text-center text-3xl font-bold text-black">How it works</h2>
+          <h2 className="text-center text-3xl font-bold leading-tight tracking-tight text-black sm:text-4xl lg:text-5xl">
+            How it works
+          </h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-black">
             A simple way to find discounted surplus food from businesses near you.
           </p>
@@ -340,7 +342,7 @@ export default function Landing() {
         <div className="mx-auto max-w-6xl px-6 py-16">
           <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-4">
             <div className="col-span-2 sm:col-span-1">
-              <Logo variant="light" linkTo="/" />
+              <Logo variant="brand" linkTo="/" />
               <p className="mt-4 max-w-xs text-sm text-neutral-400">
                 Surplus food from local restaurants and grocers. Curbside pickup only.
               </p>

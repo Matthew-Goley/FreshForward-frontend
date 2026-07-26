@@ -102,7 +102,7 @@ export default function RestaurantDashboard() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="text-xl font-bold">{restaurant.name} — Dashboard</h1>
+      <h1 className="text-xl font-bold">{restaurant.name} Dashboard</h1>
 
       <section className="mt-6">
         <div className="flex items-center justify-between">
