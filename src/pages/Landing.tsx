@@ -159,12 +159,25 @@ const wasteProblemSection = {
   },
 }
 
+const missionSection = {
+  title: "We're on a mission to eliminate food waste, one meal at a time.",
+  body: [
+    'FreshForward is the marketplace for surplus food and groceries. We aim to save you money while keeping delicious, edible food out of landfills.',
+    'Local restaurants and grocers list what they did not sell at deep discounts, and you pick it up when it works for you.',
+  ],
+  reverse: true,
+  image: {
+    src: '/mission-section.jpg',
+    alt: 'Prepared meals packaged in a restaurant kitchen',
+  },
+}
+
 const shopperValueSection = {
   title: 'Surplus food near you, priced like a steal.',
   body: [
     'Pick up discounted surplus from local restaurants and grocers, with photos, pickup windows, and prices well below what you would pay on delivery apps.',
   ],
-  cta: { label: 'Browse', to: '/browse' },
+  cta: { label: 'Browse Now', to: '/browse' },
   image: {
     src: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&h=900&q=85',
     alt: 'Prepared meals and fresh food on a table',
@@ -280,6 +293,8 @@ export default function Landing() {
 
       <SplitSection {...wasteProblemSection} />
 
+      <SplitSection {...missionSection} className="bg-[#F9FAFB]" />
+
       <section className="relative isolate overflow-hidden py-16 sm:min-h-[36rem] sm:py-20">
         <div aria-hidden className="how-it-works-map-wrap">
           <img src={howItWorksMapImage} alt="" className="how-it-works-map-image" />
@@ -319,7 +334,7 @@ export default function Landing() {
             <div className="col-span-2 sm:col-span-1">
               <Logo variant="brand" linkTo="/" />
               <p className="mt-4 max-w-xs text-sm text-neutral-400">
-                Surplus food from local restaurants and grocers. Curbside pickup only.
+                Surplus food from local restaurants and grocers.
               </p>
             </div>
 
