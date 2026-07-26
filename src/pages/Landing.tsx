@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Logo from '../components/Logo'
 import HeroAddressSearch from '../components/HeroAddressSearch'
-import { useApp } from '../lib/AppContext'
-import type { AccountType } from '../types'
 
 const heroBackgroundImage =
   'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=2400&h=1350&q=85'
@@ -19,14 +17,14 @@ const howItWorks = [
   {
     emoji: '🔍',
     title: 'Browse Local Surplus',
-    body: 'Restaurants and grocers list excess inventory at deep discounts.',
+    body: 'Restaurants and grocers list excess food at deep discounts.',
     buttonLabel: 'Browse Now',
     href: '/browse',
   },
   {
     emoji: '🤝',
     title: 'Partner with Us',
-    body: 'Restaurants and vendors list surplus food, set pickup windows, and reach customers looking for deals.',
+    body: 'List surplus food, set a pickup window, and reach nearby customers looking for a deal.',
     buttonLabel: 'Partner With Us',
     href: '/restaurant/apply',
   },
@@ -34,10 +32,8 @@ const howItWorks = [
     emoji: '🌱',
     title: 'Save Money & Reduce Waste',
     body: 'Get great food for cheap while keeping edible food out of landfills.',
-    buttonLabel: 'Get Started',
-    href: '/browse',
-    requiresAuth: true,
-    signupAccountType: 'customer' as AccountType,
+    buttonLabel: 'About Us',
+    href: '/company',
   },
 ]
 
@@ -45,11 +41,9 @@ type HowItWorksItem = (typeof howItWorks)[number]
 
 function HowItWorksCard({
   item,
-  isLoggedIn,
   onAction,
 }: {
   item: HowItWorksItem
-  isLoggedIn: boolean
   onAction: (item: HowItWorksItem) => void
 }) {
   return (
@@ -64,7 +58,7 @@ function HowItWorksCard({
         onClick={() => onAction(item)}
         className="mt-6 inline-flex w-fit cursor-pointer rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-emerald-700"
       >
-        {item.requiresAuth && !isLoggedIn ? 'Sign Up to Continue' : item.buttonLabel}
+        {item.buttonLabel}
       </button>
     </article>
   )
@@ -97,6 +91,7 @@ type SplitSectionProps = {
   image: { src: string; alt: string }
   reverse?: boolean
   className?: string
+  cta?: { label: string; to: string; variant?: 'primary' | 'outline' }
 }
 
 function SplitSection({
@@ -105,27 +100,45 @@ function SplitSection({
   image,
   reverse = false,
   className = 'bg-white',
+  cta,
 }: SplitSectionProps) {
   return (
     <section className={`py-16 sm:py-20 ${className}`}>
-      <div className="mx-auto max-w-6xl px-6">
-        <h2 className="max-w-4xl text-3xl font-bold leading-tight tracking-tight text-black sm:text-4xl lg:text-5xl">
-          {title}
-        </h2>
-
+      <div className="mx-auto max-w-7xl px-6">
         <div
-          className={`mt-12 grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-14 ${
+          className={`grid grid-cols-1 items-center gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16 xl:gap-20 ${
             reverse ? 'lg:[&>*:first-child]:order-2 lg:[&>*:last-child]:order-1' : ''
           }`}
         >
-          <div className="space-y-5 text-base leading-relaxed text-black">
-            {body.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
+          <div className="w-full">
+            <img
+              src={image.src}
+              alt={image.alt}
+              className="aspect-[5/4] w-full object-cover sm:min-h-[20rem] lg:min-h-[28rem]"
+            />
           </div>
 
-          <div className="overflow-hidden rounded-2xl shadow-lg shadow-slate-200/60">
-            <img src={image.src} alt={image.alt} className="aspect-[4/3] h-full w-full object-cover" />
+          <div className="flex flex-col justify-center">
+            <h2 className="text-3xl font-bold leading-tight tracking-tight text-black sm:text-4xl lg:text-5xl">
+              {title}
+            </h2>
+            <div className="mt-5 space-y-4 text-base leading-relaxed text-black sm:text-lg">
+              {body.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+            </div>
+            {cta && (
+              <Link
+                to={cta.to}
+                className={`mt-8 inline-flex w-fit rounded-full px-6 py-3 text-sm font-bold transition-colors ${
+                  cta.variant === 'outline'
+                    ? 'border border-emerald-600 text-emerald-700 hover:bg-emerald-50'
+                    : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                }`}
+              >
+                {cta.label}
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -136,8 +149,7 @@ function SplitSection({
 const wasteProblemSection = {
   title: 'Without a better outlet, good food goes to waste.',
   body: [
-    'Restaurants and grocers prepare more than they sell. At closing time, perfectly good meals, baked goods, and produce often get tossed, not because they\u2019re bad, but because there\u2019s no quick way to move them.',
-    'Meanwhile, shoppers pay full price on delivery apps or skip eating out altogether. FreshForward connects those two sides: surplus inventory listed locally, priced to move before it expires.',
+    'Restaurants and grocers toss good meals, baked goods, and produce at closing, not because they went bad, but because there is no fast way to sell what is left.',
   ],
   image: {
     src: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&h=900&q=85',
@@ -148,9 +160,9 @@ const wasteProblemSection = {
 const shopperValueSection = {
   title: 'Surplus food near you, priced like a steal.',
   body: [
-    'Browse listings from restaurants and grocers in your area the same way you\u2019d scroll a marketplace: photos, pickup windows, and prices that reflect surplus, not shelf price.',
-    'Reserve what you want, pick it up on your schedule, and save money on food that would have gone unsold. It\u2019s the same quality inventory at a fraction of the usual cost.',
+    'Pick up discounted surplus from local restaurants and grocers, with photos, pickup windows, and prices well below what you would pay on delivery apps.',
   ],
+  cta: { label: 'Browse', to: '/browse' },
   image: {
     src: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&h=900&q=85',
     alt: 'Prepared meals and fresh food on a table',
@@ -160,9 +172,9 @@ const shopperValueSection = {
 const partnerSection = {
   title: 'Turn unsold inventory into revenue, not trash bags.',
   body: [
-    'List excess food in minutes: set your quantity, pickup window, and discount. FreshForward puts it in front of hungry customers nearby who are actively looking for deals.',
-    'You recover costs on food you already made or stocked. Customers get value. Less edible food ends up in landfills. Everyone wins.',
+    'List what did not sell, set your pickup window and discount, and put it in front of hungry customers nearby who want great food for less.',
   ],
+  cta: { label: 'Partner With Us', to: '/restaurant/apply' },
   reverse: true,
   image: {
     src: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1200&h=900&q=85',
@@ -171,21 +183,11 @@ const partnerSection = {
 }
 
 export default function Landing() {
-  const { currentUser } = useApp()
   const navigate = useNavigate()
   const [headerVisible, setHeaderVisible] = useState(false)
   const heroRef = useRef<HTMLElement>(null)
 
   function handleHowItWorksAction(item: HowItWorksItem) {
-    if (item.requiresAuth && !currentUser) {
-      navigate('/signup', {
-        state: {
-          redirectTo: item.href,
-          accountType: item.signupAccountType ?? 'customer',
-        },
-      })
-      return
-    }
     navigate(item.href)
   }
 
@@ -206,8 +208,8 @@ export default function Landing() {
           headerVisible ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-full opacity-0'
         }`}
       >
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-6 py-4">
-          <Logo variant="dark" linkTo="/" />
+        <div className="flex w-full items-center justify-between px-8 py-4 sm:px-12 lg:px-16 xl:px-20">
+          <Logo variant="dark" linkTo="/" iconOnly />
           <div className="flex items-center gap-2 sm:gap-4">
             <Link
               to="/login"
@@ -241,8 +243,8 @@ export default function Landing() {
         />
 
         <div className="relative z-10 flex flex-1 flex-col">
-          <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 pt-6">
-            <Logo variant="brand" linkTo="/" className="text-xl" />
+          <div className="mx-auto flex w-full items-center justify-between px-8 pt-6 sm:px-12 lg:px-16 xl:px-20">
+            <Logo variant="brand" linkTo="/" iconOnly />
             <div className="flex items-center gap-3 sm:gap-4">
               <Link
                 to="/login"
@@ -282,7 +284,7 @@ export default function Landing() {
             How it works
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-black">
-            A simple way to find discounted surplus food from businesses near you.
+            Find discounted surplus food from businesses near you.
           </p>
 
           <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -290,7 +292,6 @@ export default function Landing() {
               <HowItWorksCard
                 key={item.title}
                 item={item}
-                isLoggedIn={Boolean(currentUser)}
                 onAction={handleHowItWorksAction}
               />
             ))}
@@ -301,42 +302,6 @@ export default function Landing() {
       <SplitSection {...shopperValueSection} className="bg-[#F9FAFB]" />
 
       <SplitSection {...partnerSection} />
-
-      <section className="bg-[#F9FAFB] py-16">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-6 md:grid-cols-2">
-          <article className="flex flex-col justify-between rounded-2xl border border-slate-100 bg-white p-8 shadow-sm">
-            <div>
-              <h3 className="text-xl font-bold text-black">
-                Hungry? Start exploring local deals near you.
-              </h3>
-              <p className="mt-2 text-sm text-black">
-                Browse surplus meals and groceries listed by restaurants and grocers in your area.
-              </p>
-            </div>
-            <Link
-              to="/browse"
-              className="mt-6 inline-flex w-fit rounded-full bg-emerald-600 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-emerald-700"
-            >
-              Browse Deals
-            </Link>
-          </article>
-
-          <article className="flex flex-col justify-between rounded-2xl border border-slate-100 bg-white p-8 shadow-sm">
-            <div>
-              <h3 className="text-xl font-bold text-black">Have surplus inventory?</h3>
-              <p className="mt-2 text-sm text-black">
-                List excess food, set your pickup window, and turn waste into revenue.
-              </p>
-            </div>
-            <Link
-              to="/restaurant/apply"
-              className="mt-6 inline-flex w-fit rounded-full border border-emerald-600 px-6 py-3 text-sm font-bold text-emerald-700 transition-colors hover:bg-emerald-50"
-            >
-              Partner With Us
-            </Link>
-          </article>
-        </div>
-      </section>
 
       <footer className="bg-black text-neutral-400">
         <div className="mx-auto max-w-6xl px-6 py-16">
