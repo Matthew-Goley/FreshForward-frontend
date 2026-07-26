@@ -20,11 +20,11 @@ function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/browse" element={<Browse />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
           <Route element={<Layout />}>
             <Route path="/listings" element={<Listings />} />
             <Route path="/listings/:id" element={<ListingDetail />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
             <Route path="/checkout/:listingId" element={<Checkout />} />
             <Route path="/orders/:orderId" element={<OrderConfirmation />} />
             <Route path="/restaurant/apply" element={<RestaurantApply />} />

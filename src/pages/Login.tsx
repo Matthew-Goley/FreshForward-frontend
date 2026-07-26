@@ -1,6 +1,11 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import AuthLayout, {
+  authInputClassName,
+  authLabelClassName,
+  authSubmitClassName,
+} from '../components/AuthLayout'
 import { useApp } from '../lib/AppContext'
 
 export default function Login() {
@@ -11,50 +16,82 @@ export default function Login() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const user = await login(email, password)
-    navigate(user.accountType === 'restaurant' ? '/restaurant/dashboard' : redirectTo || '/listings')
+    setError('')
+    setLoading(true)
+    try {
+      const user = await login(email, password)
+      navigate(
+        user.accountType === 'restaurant' ? '/restaurant/dashboard' : redirectTo || '/listings',
+      )
+    } catch {
+      setError('Invalid email or password. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <div className="mx-auto max-w-sm px-4 py-8">
-      <h1 className="text-xl font-bold">Login</h1>
-      <p className="mt-2 text-sm text-gray-600">Demo restaurant account: demo@restaurant.test / any password</p>
+    <AuthLayout
+      title="Welcome back"
+      subtitle="Sign in to browse surplus food from local restaurants."
+      footer={
+        <>
+          Don&apos;t have an account?{' '}
+          <Link to="/signup" className="font-semibold text-emerald-600 hover:text-emerald-700">
+            Sign up
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <p className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          Demo restaurant: <span className="font-medium">demo@restaurant.test</span> / any password
+        </p>
 
-      <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3">
-        <label className="flex flex-col gap-1 text-sm">
+        {error && (
+          <p
+            role="alert"
+            className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          >
+            {error}
+          </p>
+        )}
+
+        <label className={authLabelClassName}>
           Email
           <input
             type="email"
             required
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="border border-gray-400 px-3 py-2"
+            placeholder="you@example.com"
+            className={authInputClassName}
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm">
+
+        <label className={authLabelClassName}>
           Password
           <input
             type="password"
             required
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="border border-gray-400 px-3 py-2"
+            placeholder="Enter your password"
+            className={authInputClassName}
           />
         </label>
-        <button type="submit" className="border border-gray-400 px-4 py-2">
-          Login
+
+        <button type="submit" disabled={loading} className={authSubmitClassName}>
+          {loading ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
-
-      <p className="mt-4 text-sm">
-        No account?{' '}
-        <Link to="/signup" className="underline">
-          Sign up
-        </Link>
-      </p>
-    </div>
+    </AuthLayout>
   )
 }
