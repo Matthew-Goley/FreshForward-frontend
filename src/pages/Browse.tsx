@@ -1,48 +1,16 @@
 import { useEffect, useRef, useState, type ReactNode, type SVGProps } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import {
+  DELIVERY_ADDRESS_KEY,
+  SAVED_ADDRESSES_KEY,
+  fetchCurrentAddress,
+  formatAddressShort,
+  loadInitialAddressState,
+  searchAddressSuggestions,
+} from '../lib/address'
+import type { AddressSuggestion, SavedAddress } from '../lib/address'
 
 /* ─── Types ─── */
-
-const DELIVERY_ADDRESS_KEY = 'ff-delivery-address'
-const SAVED_ADDRESSES_KEY = 'ff-saved-addresses'
-
-function loadSavedAddresses(): SavedAddress[] {
-  try {
-    const raw = localStorage.getItem(SAVED_ADDRESSES_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw) as SavedAddress[]
-    if (!Array.isArray(parsed)) return []
-    return parsed.filter(
-      (address): address is SavedAddress =>
-        typeof address?.id === 'string' && typeof address?.full === 'string' && address.full.trim().length > 0,
-    )
-  } catch {
-    return []
-  }
-}
-
-function loadDeliveryAddress(): string {
-  return localStorage.getItem(DELIVERY_ADDRESS_KEY)?.trim() ?? ''
-}
-
-function loadInitialAddressState(): { deliveryAddress: string; savedAddresses: SavedAddress[] } {
-  const deliveryAddress = loadDeliveryAddress()
-  const savedAddresses = loadSavedAddresses()
-
-  if (deliveryAddress && !savedAddresses.some((item) => item.full === deliveryAddress)) {
-    return {
-      deliveryAddress,
-      savedAddresses: [...savedAddresses, { id: crypto.randomUUID(), full: deliveryAddress }],
-    }
-  }
-
-  return { deliveryAddress, savedAddresses }
-}
-
-interface SavedAddress {
-  id: string
-  full: string
-}
 
 interface CartLineItem {
   productId: string
@@ -971,104 +939,6 @@ const productImagePlaceholderSvg = encodeURIComponent(
 
 const PRODUCT_IMAGE_PLACEHOLDER = `data:image/svg+xml,${productImagePlaceholderSvg}`
 
-async function reverseGeocode(lat: number, lon: number): Promise<string> {
-  const res = await fetch(
-    `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
-    { headers: { 'Accept-Language': 'en' } },
-  )
-  if (!res.ok) throw new Error('Could not resolve address')
-  const data = (await res.json()) as {
-    display_name?: string
-    address?: {
-      house_number?: string
-      road?: string
-      city?: string
-      town?: string
-      village?: string
-    }
-  }
-  const a = data.address
-  if (a) {
-    const street = [a.house_number, a.road].filter(Boolean).join(' ')
-    const city = a.city ?? a.town ?? a.village
-    const parts = [street, city].filter(Boolean)
-    if (parts.length > 0) return parts.join(', ')
-  }
-  return data.display_name?.split(',').slice(0, 2).join(',') ?? 'Current location'
-}
-
-interface AddressSuggestion {
-  id: string
-  primary: string
-  secondary: string
-  full: string
-}
-
-interface NominatimSearchResult {
-  place_id: number
-  display_name: string
-  address?: {
-    house_number?: string
-    road?: string
-    city?: string
-    town?: string
-    village?: string
-    state?: string
-    postcode?: string
-  }
-}
-
-function formatAddressShort(full: string): string {
-  return full.split(',')[0]?.trim() || full
-}
-
-function formatSuggestion(result: NominatimSearchResult): AddressSuggestion {
-  const a = result.address
-  const primary = a
-    ? [a.house_number, a.road].filter(Boolean).join(' ')
-    : result.display_name.split(',')[0]?.trim() ?? result.display_name
-  const secondary = a
-    ? [a.city ?? a.town ?? a.village, a.state, a.postcode].filter(Boolean).join(', ')
-    : result.display_name.split(',').slice(1).join(',').trim()
-  const full = a
-    ? [primary, secondary].filter(Boolean).join(', ')
-    : result.display_name
-  return { id: String(result.place_id), primary, secondary, full }
-}
-
-async function searchAddressSuggestions(query: string): Promise<AddressSuggestion[]> {
-  const trimmed = query.trim()
-  if (trimmed.length < 2) return []
-  const res = await fetch(
-    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(trimmed)}&format=json&addressdetails=1&limit=6&countrycodes=us`,
-    { headers: { 'Accept-Language': 'en' } },
-  )
-  if (!res.ok) return []
-  const data = (await res.json()) as NominatimSearchResult[]
-  return data.map(formatSuggestion)
-}
-
-function fetchCurrentAddress(): Promise<string> {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(new Error('Geolocation is not supported'))
-      return
-    }
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const address = await reverseGeocode(pos.coords.latitude, pos.coords.longitude)
-          resolve(address)
-        } catch (err) {
-          reject(err)
-        }
-      },
-      (err) => reject(err),
-      { enableHighAccuracy: true, timeout: 12000 },
-    )
-  })
-}
-
 /* ─── Subcomponents ─── */
 
 function ProductImage({ src, alt }: { src: string; alt: string }) {
@@ -1734,7 +1604,7 @@ function AddressDropdown({
                   type="button"
                   onClick={onUseLocation}
                   disabled={locationLoading}
-                  className={`flex w-full items-start gap-3 border-t border-gray-100 px-4 py-3 text-left disabled:opacity-60 ${textButtonHover}`}
+                  className={`flex w-full cursor-pointer items-start gap-3 border-t border-gray-100 px-4 py-3 text-left disabled:cursor-not-allowed disabled:opacity-60 ${textButtonHover}`}
                 >
                   <IconGpsTarget className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
                   <div className="min-w-0">
@@ -2129,11 +1999,7 @@ export default function Browse() {
             </Link>
             <Link
               to="/signup"
-              className={`hidden rounded-lg px-3.5 py-1.5 text-sm font-semibold shadow-sm transition-colors sm:inline ${
-                headerScrolled
-                  ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                  : 'bg-white text-emerald-700 hover:bg-emerald-50'
-              }`}
+              className="hidden rounded-lg bg-emerald-600 px-3.5 py-1.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 sm:inline"
             >
               Sign Up
             </Link>

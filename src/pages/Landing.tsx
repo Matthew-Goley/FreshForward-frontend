@@ -1,69 +1,71 @@
-import { useEffect, useRef, useState, type FormEvent, type SVGProps } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Logo from '../components/Logo'
-import illustrationCustomer from '../assets/landing/illustration-customer.png'
-import illustrationPartner from '../assets/landing/illustration-partner.png'
-import illustrationApp from '../assets/landing/illustration-app.png'
+import HeroAddressSearch from '../components/HeroAddressSearch'
 
-function IconSearch(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" {...props}>
-      <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth={1.8} />
-      <path d="m18 18-4.35-4.35" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
-    </svg>
-  )
-}
+const heroBackgroundImage =
+  'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=2400&h=1350&q=85'
 
-function IconArrowRight(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" {...props}>
-      <path d="M4 10h12M11 5l5 5-5 5" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
+const heroBackgroundPosition = '88% center'
 
-const audienceCards = [
+const heroOverlayGradient = [
+  'radial-gradient(ellipse 85% 75% at 50% 42%, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0.55) 42%, transparent 72%)',
+  'linear-gradient(to right, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.65) 45%, rgba(0, 0, 0, 0.25) 100%)',
+].join(', ')
+
+const howItWorksMapImage = '/how-it-works-map.jpg'
+
+const howItWorks = [
   {
-    image: illustrationCustomer,
-    title: 'Browse selection',
-    body: 'Browse surplus meals and groceries from local restaurants near you, priced up to 70% off.',
-    linkTo: '/browse',
-    linkLabel: 'Start browsing',
+    emoji: '🔍',
+    title: 'Browse Local Surplus',
+    body: 'Restaurants and grocers list excess food at deep discounts.',
+    buttonLabel: 'Browse Now',
+    href: '/browse',
   },
   {
-    image: illustrationPartner,
-    title: 'Become a partner',
-    body: 'Turn unsold inventory into revenue instead of the dumpster. Set your own price and pickup window.',
-    linkTo: '/restaurant/apply',
-    linkLabel: 'Apply to list',
+    emoji: '🤝',
+    title: 'Partner with Us',
+    body: 'List surplus food, set a pickup window, and reach nearby customers looking for a deal.',
+    buttonLabel: 'Partner With Us',
+    href: '/restaurant/apply',
   },
   {
-    image: illustrationApp,
-    title: 'Get easy access',
-    body: 'The FreshForward app is on the way. Browse, reserve, and get notified the moment new surplus drops.',
-    linkTo: '/browse',
-    linkLabel: 'Get the app',
-    // No app exists yet, so this card is held back from rendering below.
-    // Kept in the data (not deleted) so it's a one-line flip once there is one.
-    enabled: false,
+    emoji: '🌱',
+    title: 'Save Money & Reduce Waste',
+    body: 'Get great food for cheap while keeping edible food out of landfills.',
+    buttonLabel: 'Learn More',
+    href: '/company',
   },
 ]
 
-// Names drawn from the same vendor list already used in Browse.tsx's product
-// catalog, deliberately excluding real chains that also appear there
-// (ALDI, Chipotle, Whole Foods, etc.) since listing those here would imply
-// a partnership that doesn't exist.
-const partners = ['Parisian Bakery', 'Local Harvest Co.', 'Curry House', 'Harbor Fish Market', 'Bodega Express', 'CookUnity']
+type HowItWorksItem = (typeof howItWorks)[number]
 
-const stats = [
-  { value: '1,180 lbs', label: 'Food rescued this month' },
-  { value: '$14,900', label: 'Saved by customers' },
-  { value: '38', label: 'Restaurants live on FreshForward' },
-]
+function HowItWorksCard({
+  item,
+  onAction,
+}: {
+  item: HowItWorksItem
+  onAction: (item: HowItWorksItem) => void
+}) {
+  return (
+    <article className="flex flex-col rounded-2xl border border-white/10 bg-black/55 p-6 backdrop-blur-sm">
+      <span className="text-2xl" aria-hidden>
+        {item.emoji}
+      </span>
+      <h3 className="mt-4 text-lg font-bold text-white">{item.title}</h3>
+      <p className="mt-2 flex-1 text-sm leading-relaxed text-white">{item.body}</p>
+      <button
+        type="button"
+        onClick={() => onAction(item)}
+        className="mt-6 inline-flex w-fit cursor-pointer rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-emerald-700"
+      >
+        {item.buttonLabel}
+      </button>
+    </article>
+  )
+}
 
-// Same category set and ids as Browse.tsx's sidebar, minus "Home". Kept in
-// sync rather than inventing a separate list. The `id` matches Browse.tsx's
-// SidebarCategoryId exactly so the ?category= link lands on the right tab.
 const footerCategories = [
   { label: 'Grocery', id: 'grocery' },
   { label: 'Vegan', id: 'vegan' },
@@ -74,30 +76,136 @@ const footerCategories = [
   { label: 'Deals', id: 'deals' },
 ]
 
-// All point at the same /company skeleton page for now, until each gets its
-// own real page.
-const footerCompanyLinks = ['About Us', 'Careers', 'Contact Us', 'Our Team', 'Company Blog']
+const footerCompanyLinks = [
+  { label: 'About Us', to: '/company' },
+  { label: 'Careers', to: '/company' },
+  { label: 'Contact Us', to: '/company' },
+]
 
 const footerBusinessLinks = [
   { label: 'Become a Partner', to: '/restaurant/apply' },
   { label: 'Partner Central', to: '/doing-business' },
-  { label: 'Promotions', to: '/doing-business' },
 ]
 
+type SplitSectionProps = {
+  title: string
+  body: string[]
+  image: { src: string; alt: string }
+  reverse?: boolean
+  className?: string
+  cta?: { label: string; to: string; variant?: 'primary' | 'outline' }
+}
+
+function SplitSection({
+  title,
+  body,
+  image,
+  reverse = false,
+  className = 'bg-white',
+  cta,
+}: SplitSectionProps) {
+  return (
+    <section className={`py-16 sm:py-20 ${className}`}>
+      <div className="mx-auto max-w-7xl px-6">
+        <div
+          className={`grid grid-cols-1 items-center gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16 xl:gap-20 ${
+            reverse ? 'lg:[&>*:first-child]:order-2 lg:[&>*:last-child]:order-1' : ''
+          }`}
+        >
+          <div className="w-full">
+            <img
+              src={image.src}
+              alt={image.alt}
+              className="aspect-[5/4] w-full object-cover sm:min-h-[20rem] lg:min-h-[28rem]"
+            />
+          </div>
+
+          <div className="flex flex-col justify-center">
+            <h2 className="text-3xl font-bold leading-tight tracking-tight text-black sm:text-4xl lg:text-5xl">
+              {title}
+            </h2>
+            <div className="mt-5 space-y-4 text-base leading-relaxed text-black sm:text-lg">
+              {body.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+            </div>
+            {cta && (
+              <Link
+                to={cta.to}
+                className={`mt-8 inline-flex w-fit rounded-full px-6 py-3 text-sm font-bold transition-colors ${
+                  cta.variant === 'outline'
+                    ? 'border border-emerald-600 text-emerald-700 hover:bg-emerald-50'
+                    : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                }`}
+              >
+                {cta.label}
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+const wasteProblemSection = {
+  title: 'Without a better outlet, good food goes to waste.',
+  body: [
+    'Restaurants and grocers toss leftover food and groceries at closing, not because they went bad, but because there is no fast way to sell what is left.',
+  ],
+  image: {
+    src: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&h=900&q=85',
+    alt: 'Fresh groceries and produce in a store',
+  },
+}
+
+const missionSection = {
+  title: "We're on a mission to eliminate food waste, one meal at a time.",
+  body: [
+    'FreshForward is the marketplace for surplus food and groceries. We aim to save you money while keeping delicious, edible food out of landfills.',
+    'Local restaurants and grocers list what they did not sell at deep discounts, and you pick it up when it works for you.',
+  ],
+  reverse: true,
+  image: {
+    src: '/mission-section.jpg',
+    alt: 'Prepared meals packaged in a restaurant kitchen',
+  },
+}
+
+const shopperValueSection = {
+  title: 'Surplus food near you, priced like a steal.',
+  body: [
+    'Pick up discounted surplus from local restaurants and grocers, with photos, pickup windows, and prices well below what you would pay on delivery apps.',
+  ],
+  cta: { label: 'Browse Now', to: '/browse' },
+  image: {
+    src: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&h=900&q=85',
+    alt: 'Prepared meals and fresh food on a table',
+  },
+}
+
+const partnerSection = {
+  title: 'Turn unsold inventory into revenue, not trash bags.',
+  body: [
+    'List what did not sell, set your pickup window and discount, and put it in front of hungry customers nearby who want great food for less.',
+  ],
+  cta: { label: 'Partner With Us', to: '/restaurant/apply' },
+  reverse: true,
+  image: {
+    src: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1200&h=900&q=85',
+    alt: 'Restaurant kitchen preparing fresh food',
+  },
+}
+
 export default function Landing() {
-  const [zip, setZip] = useState('')
-  const [topSearchQuery, setTopSearchQuery] = useState('')
-  const [headerVisible, setHeaderVisible] = useState(false)
   const navigate = useNavigate()
+  const [headerVisible, setHeaderVisible] = useState(false)
   const heroRef = useRef<HTMLElement>(null)
 
-  function handleSearch(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    navigate('/browse')
+  function handleHowItWorksAction(item: HowItWorksItem) {
+    navigate(item.href)
   }
 
-  // Same scroll-driven header pattern Browse.tsx uses, adapted for normal
-  // document scrolling (Landing doesn't use Browse's custom scroll container).
   useEffect(() => {
     const hero = heroRef.current
     if (!hero) return
@@ -109,42 +217,24 @@ export default function Landing() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-white text-slate-800">
-      {/* Sticky top bar: hidden while the hero (which has its own logo + auth row) is in view, slides in once scrolled past it */}
+    <div className="min-h-screen bg-white text-black">
       <header
         className={`fixed inset-x-0 top-0 z-50 border-b border-slate-100 bg-white shadow-sm transition-all duration-300 ${
           headerVisible ? 'translate-y-0 opacity-100' : 'pointer-events-none -translate-y-full opacity-0'
         }`}
       >
-        <div className="mx-auto flex max-w-7xl items-center gap-4 px-6 py-3 sm:gap-6 sm:px-10 lg:px-14">
-          <Link to="/" aria-label="FreshForward home" className="shrink-0">
-            <Logo variant="dark" />
-          </Link>
-
-          <form onSubmit={handleSearch} className="min-w-0 max-w-md flex-1">
-            <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 py-1.5 pl-4 pr-1.5">
-              <IconSearch className="h-4 w-4 shrink-0 text-slate-400" />
-              <input
-                type="text"
-                value={topSearchQuery}
-                onChange={(e) => setTopSearchQuery(e.target.value)}
-                placeholder="Search FreshForward..."
-                aria-label="Search FreshForward"
-                className="min-w-0 flex-1 border-none bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400"
-              />
-            </div>
-          </form>
-
-          <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
+        <div className="flex w-full items-center justify-between px-8 py-4 sm:px-12 lg:px-16 xl:px-20">
+          <Logo variant="dark" linkTo="/" iconOnly />
+          <div className="flex items-center gap-2 sm:gap-4">
             <Link
               to="/login"
-              className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 sm:px-4"
+              className="rounded-lg px-3 py-2 text-sm font-semibold text-black transition-colors hover:bg-slate-50"
             >
               Sign In
             </Link>
             <Link
               to="/signup"
-              className="rounded-lg bg-emerald-600 px-3.5 py-1.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 sm:px-4"
+              className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
             >
               Sign Up
             </Link>
@@ -152,163 +242,108 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* Hero */}
-      <section ref={heroRef} className="relative overflow-hidden bg-emerald-600">
-        <div aria-hidden className="pointer-events-none absolute -left-20 -top-20 h-56 w-56 rounded-full bg-white/10" />
-        <div aria-hidden className="pointer-events-none absolute -bottom-24 right-[10%] h-72 w-72 rounded-full bg-white/10" />
-        <div aria-hidden className="pointer-events-none absolute right-1/3 top-8 h-24 w-24 rounded-full bg-white/10" />
+      <section ref={heroRef} className="relative flex min-h-[88vh] flex-col overflow-hidden">
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-cover bg-no-repeat"
+          style={{
+            backgroundImage: `url(${heroBackgroundImage})`,
+            backgroundPosition: heroBackgroundPosition,
+          }}
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0"
+          style={{ background: heroOverlayGradient }}
+        />
 
-        {/* Top bar: logo left, auth actions right. One seamless row, no separate nav underneath */}
-        <div className="relative mx-auto flex max-w-7xl items-center justify-between px-6 pt-6 sm:px-10 lg:px-14">
-          <Link to="/" aria-label="FreshForward home">
-            <Logo />
-          </Link>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Link
-              to="/login"
-              className="rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/15 sm:px-4"
-            >
-              Sign In
-            </Link>
-            <Link
-              to="/signup"
-              className="rounded-lg bg-white px-3.5 py-1.5 text-sm font-semibold text-emerald-700 shadow-sm transition-colors hover:bg-emerald-50 sm:px-4"
-            >
-              Sign Up
-            </Link>
-          </div>
-        </div>
-
-        {/* Main hero graphic: logo mark, slogan, search bar */}
-        <div className="relative mx-auto flex max-w-3xl flex-col items-center px-6 py-20 text-center sm:py-28">
-          <Logo size="lg" />
-          <h1 className="mt-6 max-w-2xl text-3xl font-bold leading-snug tracking-tight text-white sm:text-4xl lg:text-5xl">
-            Food,{' '}
-            <span className="font-['Dancing_Script',cursive] text-4xl font-bold text-emerald-100 sm:text-5xl lg:text-6xl">
-              finally
-            </span>{' '}
-            affordable.
-          </h1>
-          <p className="mt-5 max-w-xl text-emerald-50/90">
-            Browse surplus food from restaurants and grocers near you. Order in seconds, pick up curbside.
-          </p>
-
-          <form
-            onSubmit={handleSearch}
-            className="mt-9 flex w-full max-w-md items-center gap-2 rounded-full bg-white p-1.5 pl-5 shadow-lg shadow-emerald-900/20"
-          >
-            <IconSearch className="h-4 w-4 shrink-0 text-slate-400" />
-            <input
-              type="text"
-              value={zip}
-              onChange={(e) => setZip(e.target.value)}
-              placeholder="Enter your zip code"
-              aria-label="Enter your zip code"
-              className="min-w-0 flex-1 border-none bg-transparent py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400"
-            />
-            <button
-              type="submit"
-              aria-label="Find food near you"
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-600 text-white transition-colors hover:bg-emerald-700"
-            >
-              <IconArrowRight className="h-4 w-4" />
-            </button>
-          </form>
-
-          <Link
-            to="/browse"
-            className="mt-4 text-sm font-medium text-emerald-50/90 underline decoration-emerald-200/50 underline-offset-4 hover:text-white"
-          >
-            or browse everything near you →
-          </Link>
-        </div>
-      </section>
-
-      {/* Partners */}
-      <section className="border-t border-slate-100 bg-slate-50">
-        <div className="mx-auto max-w-6xl px-6 pt-14">
-          <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-            Trusted by local restaurants &amp; grocers
-          </p>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
-            {partners.map((name) => (
-              <span key={name} className="text-lg font-bold text-slate-400">
-                {name}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Statistics */}
-        <div className="mx-auto max-w-4xl px-6 py-14">
-          <div className="grid grid-cols-1 gap-8 border-t border-slate-200 pt-10 sm:grid-cols-3">
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="font-mono text-3xl font-bold text-emerald-600 sm:text-4xl">{stat.value}</p>
-                <p className="mt-1 text-sm text-slate-500">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-          <p className="mt-6 text-center text-xs text-slate-400">Concept figures for this preview, not live data.</p>
-        </div>
-      </section>
-
-      {/* Each widget gets its own full section, alternating layout. Mirrors DoorDash's "Become a Dasher" banner treatment */}
-      {audienceCards
-        .filter((card) => card.enabled !== false)
-        .map(({ image, title, body, linkTo, linkLabel }, i) => (
-        <section key={title} className={i % 2 === 1 ? 'bg-slate-50' : 'bg-white'}>
-          <div
-            className={`mx-auto flex max-w-5xl flex-col items-center gap-10 px-6 py-16 sm:py-20 ${
-              i % 2 === 1 ? 'sm:flex-row-reverse' : 'sm:flex-row'
-            }`}
-          >
-            <img src={image} alt="" className="h-56 w-56 shrink-0 object-contain sm:h-64 sm:w-64" />
-            <div className="text-center sm:text-left">
-              <h2 className="text-2xl font-bold leading-snug text-slate-900 sm:text-3xl">{title}</h2>
-              <p className="mt-3 max-w-sm text-slate-500">{body}</p>
+        <div className="relative z-10 flex flex-1 flex-col">
+          <div className="mx-auto flex w-full items-center justify-between px-8 pt-6 sm:px-12 lg:px-16 xl:px-20">
+            <Logo variant="brand" linkTo="/" iconOnly />
+            <div className="flex items-center gap-3 sm:gap-4">
               <Link
-                to={linkTo}
-                className="mt-6 inline-flex items-center rounded-full bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-emerald-700"
+                to="/login"
+                className="text-sm font-semibold text-white transition-colors hover:text-emerald-400"
               >
-                {linkLabel}
+                Sign In
+              </Link>
+              <Link
+                to="/signup"
+                className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+              >
+                Sign Up
               </Link>
             </div>
           </div>
-        </section>
-      ))}
 
-      {/* Minimal closing banner */}
-      <section className="bg-emerald-600">
-        <div className="mx-auto max-w-3xl px-6 py-16 text-center sm:py-20">
-          <h2 className="text-2xl font-bold text-white sm:text-3xl">Ready to eat well for less?</h2>
-          <p className="mt-3 text-emerald-50/90">Create a free account and start saving on your first order today.</p>
-          <Link
-            to="/signup"
-            className="mt-6 inline-flex items-center rounded-full bg-white px-6 py-3 text-sm font-bold text-emerald-700 shadow-sm transition-colors hover:bg-emerald-50"
-          >
-            Sign up free
-          </Link>
+          <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-6 pb-16 pt-10 text-center sm:pb-20">
+            <Logo size="lg" variant="brand" linkTo="/" />
+
+            <h1 className="mt-8 max-w-2xl text-3xl font-bold leading-tight tracking-tight text-white drop-shadow-sm sm:text-4xl lg:text-5xl">
+              Local surplus food &amp; groceries, heavily discounted.
+            </h1>
+            <p className="mt-4 max-w-xl text-base text-white/90 drop-shadow-sm sm:text-lg">
+              Save on meals, groceries, and produce from local spots nearby.
+            </p>
+
+            <HeroAddressSearch variant="hero" className="mt-8 max-w-xl" />
+          </div>
         </div>
       </section>
 
-      {/* Footer */}
+      <SplitSection {...wasteProblemSection} />
+
+      <SplitSection {...missionSection} className="bg-[#F9FAFB]" />
+
+      <section className="relative isolate overflow-hidden py-16 sm:min-h-[36rem] sm:py-20">
+        <div aria-hidden className="how-it-works-map-wrap">
+          <img src={howItWorksMapImage} alt="" className="how-it-works-map-image" />
+        </div>
+        <div
+          aria-hidden
+          className="absolute inset-0 z-[1] bg-gradient-to-b from-black/55 via-black/40 to-black/50"
+        />
+
+        <div className="relative z-10 mx-auto max-w-6xl px-6">
+          <h2 className="text-center text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">
+            How it works
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-white/90">
+            Find discounted surplus food from businesses near you.
+          </p>
+
+          <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+            {howItWorks.map((item) => (
+              <HowItWorksCard
+                key={item.title}
+                item={item}
+                onAction={handleHowItWorksAction}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <SplitSection {...shopperValueSection} className="bg-[#F9FAFB]" />
+
+      <SplitSection {...partnerSection} />
+
       <footer className="bg-black text-neutral-400">
         <div className="mx-auto max-w-6xl px-6 py-16">
           <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-4">
             <div className="col-span-2 sm:col-span-1">
-              <Logo />
+              <Logo variant="brand" linkTo="/" />
               <p className="mt-4 max-w-xs text-sm text-neutral-400">
-                Surplus food from local restaurants and grocers, priced to move. Curbside pickup only.
+                Surplus food from local restaurants and grocers.
               </p>
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold text-white">Popular Categories</h3>
+              <h3 className="text-sm font-semibold text-white">Categories</h3>
               <ul className="mt-4 space-y-2.5 text-sm">
                 {footerCategories.map(({ label, id }) => (
                   <li key={id}>
-                    <Link to={`/browse?category=${id}`} className="text-neutral-400 transition-colors hover:text-white">
+                    <Link to={`/browse?category=${id}`} className="transition-colors hover:text-white">
                       {label}
                     </Link>
                   </li>
@@ -319,9 +354,9 @@ export default function Landing() {
             <div>
               <h3 className="text-sm font-semibold text-white">Company</h3>
               <ul className="mt-4 space-y-2.5 text-sm">
-                {footerCompanyLinks.map((label) => (
+                {footerCompanyLinks.map(({ label, to }) => (
                   <li key={label}>
-                    <Link to="/company" className="text-neutral-400 transition-colors hover:text-white">
+                    <Link to={to} className="transition-colors hover:text-white">
                       {label}
                     </Link>
                   </li>
@@ -334,15 +369,9 @@ export default function Landing() {
               <ul className="mt-4 space-y-2.5 text-sm">
                 {footerBusinessLinks.map(({ label, to }) => (
                   <li key={label}>
-                    {to === '#' ? (
-                      <a href="#" className="text-neutral-400 transition-colors hover:text-white">
-                        {label}
-                      </a>
-                    ) : (
-                      <Link to={to} className="text-neutral-400 transition-colors hover:text-white">
-                        {label}
-                      </Link>
-                    )}
+                    <Link to={to} className="transition-colors hover:text-white">
+                      {label}
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -350,17 +379,14 @@ export default function Landing() {
           </div>
 
           <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-neutral-800 pt-8 text-xs text-neutral-500 sm:flex-row">
-            <p>© {new Date().getFullYear()} FreshForward.</p>
+            <p>&copy; {new Date().getFullYear()} FreshForward.</p>
             <div className="flex items-center gap-5">
-              <Link to="/privacy" className="text-neutral-400 transition-colors hover:text-white">
+              <Link to="/privacy" className="transition-colors hover:text-white">
                 Privacy
               </Link>
-              <Link to="/terms" className="text-neutral-400 transition-colors hover:text-white">
+              <Link to="/terms" className="transition-colors hover:text-white">
                 Terms
               </Link>
-              <a href="#" className="text-neutral-400 transition-colors hover:text-white">
-                LinkedIn
-              </a>
             </div>
           </div>
         </div>

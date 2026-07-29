@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import AuthLayout, {
   authInputClassName,
   authLabelClassName,
@@ -17,10 +17,13 @@ const accountTypeOptions: { value: AccountType; label: string; description: stri
 export default function Signup() {
   const { signup } = useApp()
   const navigate = useNavigate()
+  const location = useLocation()
+  const signupState = location.state as { redirectTo?: string; accountType?: AccountType } | null
+  const redirectTo = signupState?.redirectTo
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [accountType, setAccountType] = useState<AccountType>('customer')
+  const [accountType, setAccountType] = useState<AccountType>(signupState?.accountType ?? 'customer')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -30,7 +33,9 @@ export default function Signup() {
     setLoading(true)
     try {
       const user = await signup(email, password, accountType)
-      navigate(user.accountType === 'restaurant' ? '/restaurant/dashboard' : '/listings')
+      navigate(
+        user.accountType === 'restaurant' ? '/restaurant/dashboard' : redirectTo || '/listings',
+      )
     } catch {
       setError('Could not create your account. Please try again.')
     } finally {

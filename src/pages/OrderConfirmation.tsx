@@ -37,7 +37,7 @@ export default function OrderConfirmation() {
         </div>
       </dl>
 
-      <p className="mt-4 font-semibold">Confirmed — pick up at {order.pickupWindow}</p>
+      <p className="mt-4 font-semibold">Confirmed. Pick up at {order.pickupWindow}</p>
     </div>
   )
 }

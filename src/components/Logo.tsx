@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom'
 type LogoProps = {
   className?: string
   size?: 'sm' | 'lg'
-  variant?: 'light' | 'dark'
+  variant?: 'light' | 'dark' | 'brand'
   linkTo?: string
+  iconOnly?: boolean
 }
 
 export default function Logo({
@@ -12,9 +13,13 @@ export default function Logo({
   size = 'sm',
   variant = 'light',
   linkTo,
+  iconOnly = false,
 }: LogoProps) {
   const iconSize = size === 'lg' ? 40 : 28
-  const iconFill = variant === 'dark' ? '#059669' : '#ffffff'
+  const iconFill =
+    variant === 'dark' || variant === 'brand' ? '#059669' : '#ffffff'
+  const iconFillSecondary =
+    variant === 'brand' ? '#10B981' : iconFill
 
   const content = (
     <>
@@ -42,25 +47,28 @@ export default function Logo({
           height="9.5"
           rx="2"
           transform="rotate(-45 14.95 7.95)"
-          fill={iconFill}
-          fillOpacity={0.6}
+          fill={iconFillSecondary}
+          fillOpacity={variant === 'brand' ? 1 : 0.6}
         />
       </svg>
-      <span
-        className={`${size === 'lg' ? 'text-3xl' : 'text-xl'} font-bold tracking-tight ${
-          variant === 'dark' ? 'text-slate-900' : 'text-white'
-        }`}
-      >
-        FreshForward
-      </span>
+      {!iconOnly && (
+        <span
+          className={`${size === 'lg' ? 'text-3xl' : 'text-xl'} font-bold tracking-tight ${
+            variant === 'dark' ? 'text-slate-900' : 'text-white'
+          }`}
+        >
+          FreshForward
+        </span>
+      )}
     </>
   )
 
-  const wrapperClass = `inline-flex items-center gap-2.5 ${className}`
+  const wrapperClass = `inline-flex items-center ${iconOnly ? '' : 'gap-2.5'} ${className}`
+  const ariaLabel = iconOnly ? 'FreshForward home' : undefined
 
   if (linkTo) {
     return (
-      <Link to={linkTo} className={wrapperClass}>
+      <Link to={linkTo} className={wrapperClass} aria-label={ariaLabel}>
         {content}
       </Link>
     )
