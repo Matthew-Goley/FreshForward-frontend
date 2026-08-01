@@ -78,7 +78,6 @@ const footerCategories = [
 
 const footerCompanyLinks = [
   { label: 'About Us', to: '/company' },
-  { label: 'Careers', to: '/company' },
   { label: 'Contact Us', to: '/company' },
 ]
 
