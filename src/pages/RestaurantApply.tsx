@@ -1,10 +1,25 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import { Link } from 'react-router-dom'
+import AuthLayout, {
+  authInputClassName,
+  authLabelClassName,
+  authSubmitClassName,
+  authTextareaClassName,
+} from '../components/AuthLayout'
 import { useApp } from '../lib/AppContext'
+
+const partnerHero = {
+  line1: 'Turn surplus into sales.',
+  line2: 'Not trash bags.',
+  body: 'List excess food, set pickup windows, and reach customers nearby who want great food for less.',
+}
 
 export default function RestaurantApply() {
   const { submitApplication } = useApp()
   const [submitted, setSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const [name, setName] = useState('')
   const [contactEmail, setContactEmail] = useState('')
@@ -13,65 +28,124 @@ export default function RestaurantApply() {
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    await submitApplication({ name, contactEmail, address, description })
-    setSubmitted(true)
+    setError('')
+    setLoading(true)
+    try {
+      await submitApplication({ name, contactEmail, address, description })
+      setSubmitted(true)
+    } catch {
+      setError('Could not submit your application. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (submitted) {
     return (
-      <div className="mx-auto max-w-sm px-4 py-8">
-        <p className="border border-gray-400 px-4 py-3">Application submitted. Pending approval.</p>
-      </div>
+      <AuthLayout
+        hero={partnerHero}
+        title="Application submitted"
+        subtitle="Thanks for applying to partner with FreshForward."
+        footer={
+          <>
+            Already have an account?{' '}
+            <Link to="/login" className="font-semibold text-emerald-600 hover:text-emerald-700">
+              Sign in
+            </Link>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <p className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            Your application is pending approval. We&apos;ll review your details and follow up at{' '}
+            <span className="font-medium">{contactEmail}</span>.
+          </p>
+          <Link
+            to="/"
+            className={`${authSubmitClassName} mt-0 inline-block text-center no-underline`}
+          >
+            Back to home
+          </Link>
+        </div>
+      </AuthLayout>
     )
   }
 
   return (
-    <div className="mx-auto max-w-sm px-4 py-8">
-      <h1 className="text-xl font-bold">Restaurant Application</h1>
+    <AuthLayout
+      hero={partnerHero}
+      title="Partner with FreshForward"
+      subtitle="Apply to list surplus food and reach customers near you."
+      footer={
+        <>
+          Already have a restaurant account?{' '}
+          <Link to="/login" className="font-semibold text-emerald-600 hover:text-emerald-700">
+            Sign in
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {error && (
+          <p
+            role="alert"
+            className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          >
+            {error}
+          </p>
+        )}
 
-      <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3">
-        <label className="flex flex-col gap-1 text-sm">
+        <label className={authLabelClassName}>
           Restaurant name
           <input
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="border border-gray-400 px-3 py-2"
+            placeholder="Your restaurant or store name"
+            className={authInputClassName}
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm">
+
+        <label className={authLabelClassName}>
           Contact email
           <input
             type="email"
             required
+            autoComplete="email"
             value={contactEmail}
             onChange={(e) => setContactEmail(e.target.value)}
-            className="border border-gray-400 px-3 py-2"
+            placeholder="you@restaurant.com"
+            className={authInputClassName}
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm">
+
+        <label className={authLabelClassName}>
           Address
           <input
             required
             value={address}
             onChange={(e) => setAddress(e.target.value)}
-            className="border border-gray-400 px-3 py-2"
+            placeholder="Street, city, state"
+            className={authInputClassName}
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm">
+
+        <label className={authLabelClassName}>
           Description
           <textarea
             required
             rows={4}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="border border-gray-400 px-3 py-2"
+            placeholder="Tell us what you sell and when you typically have surplus food."
+            className={authTextareaClassName}
           />
         </label>
-        <button type="submit" className="border border-gray-400 px-4 py-2">
-          Submit Application
+
+        <button type="submit" disabled={loading} className={authSubmitClassName}>
+          {loading ? 'Submitting…' : 'Submit application'}
         </button>
       </form>
-    </div>
+    </AuthLayout>
   )
 }
