@@ -132,24 +132,37 @@ export async function searchAddressSuggestions(query: string): Promise<AddressSu
 }
 
 export async function fetchCurrentAddress(): Promise<string> {
+  const { lat, lng } = await fetchCurrentCoordinates()
+  return reverseGeocode(lat, lng)
+}
+
+export async function fetchCurrentCoordinates(): Promise<{ lat: number; lng: number }> {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
       reject(new Error('Geolocation is not supported'))
       return
     }
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const address = await reverseGeocode(pos.coords.latitude, pos.coords.longitude)
-          resolve(address)
-        } catch (err) {
-          reject(err)
-        }
+      (pos) => {
+        resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude })
       },
       (err) => reject(err),
       { enableHighAccuracy: true, timeout: 12000 },
     )
   })
+}
+
+export async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
+  const trimmed = address.trim()
+  if (!trimmed) return null
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(trimmed)}&format=json&limit=1&countrycodes=us`,
+    { headers: { 'Accept-Language': 'en' } },
+  )
+  if (!res.ok) return null
+  const data = (await res.json()) as { lat: string; lon: string }[]
+  if (data.length === 0) return null
+  return { lat: Number(data[0].lat), lng: Number(data[0].lon) }
 }
 
 export function saveAddressSelection(

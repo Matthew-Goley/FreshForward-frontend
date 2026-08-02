@@ -1,14 +1,18 @@
-import { useEffect, useRef, useState, type ReactNode, type SVGProps } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode, type SVGProps } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import BrowseStoreMap from '../components/BrowseStoreMap'
 import {
   DELIVERY_ADDRESS_KEY,
   SAVED_ADDRESSES_KEY,
   fetchCurrentAddress,
+  fetchCurrentCoordinates,
   formatAddressShort,
+  geocodeAddress,
   loadInitialAddressState,
   searchAddressSuggestions,
 } from '../lib/address'
 import type { AddressSuggestion, SavedAddress } from '../lib/address'
+import { NEARBY_RADIUS_METERS, buildNearbyStores } from '../lib/nearbyStores'
 
 /* ─── Types ─── */
 
@@ -124,6 +128,15 @@ function IconDeals(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} {...props}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 3 14.5 8.5 20.5 9.3 16 13.4 17.2 19.4 12 16.6 6.8 19.4 8 13.4 3.5 9.3 9.5 8.5 12 3Z" />
+    </svg>
+  )
+}
+
+function IconMap(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 6.5 9 4.5 15 6.5 21 4.5v13l-6 2-6-2-6 2v-13Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5v13M15 6.5v13" />
     </svg>
   )
 }
@@ -1654,6 +1667,10 @@ export default function Browse() {
   const [itemsLimit, setItemsLimit] = useState(INITIAL_ITEMS_PER_SECTION)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [headerScrolled, setHeaderScrolled] = useState(false)
+  const [mapOpen, setMapOpen] = useState(false)
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null)
+  const [mapLoading, setMapLoading] = useState(false)
+  const [mapError, setMapError] = useState('')
   const pageScrollRef = useRef<HTMLDivElement>(null)
   const heroRef = useRef<HTMLDivElement>(null)
   const searchTimerRef = useRef<number | null>(null)
@@ -1741,6 +1758,39 @@ export default function Browse() {
   const handleSidebarChange = (categoryId: string) => {
     setActiveSidebar(categoryId)
     setItemsLimit(INITIAL_ITEMS_PER_SECTION)
+    setMapOpen(false)
+  }
+
+  const nearbyStores = useMemo(
+    () => (mapCenter ? buildNearbyStores(mapCenter.lat, mapCenter.lng) : []),
+    [mapCenter],
+  )
+
+  const handleOpenMap = async () => {
+    setMapOpen(true)
+    setMapLoading(true)
+    setMapError('')
+    setMapCenter(null)
+
+    try {
+      let coords: { lat: number; lng: number } | null = null
+      if (deliveryAddress.trim()) {
+        coords = await geocodeAddress(deliveryAddress)
+      }
+      if (!coords) {
+        coords = await fetchCurrentCoordinates()
+      }
+      setMapCenter(coords)
+    } catch {
+      setMapError('Add an address or allow location access to view nearby stores on the map.')
+    } finally {
+      setMapLoading(false)
+    }
+  }
+
+  const handleCloseMap = () => {
+    setMapOpen(false)
+    setMapError('')
   }
 
   const handlePillChange = (pillId: string | null) => {
@@ -2032,22 +2082,42 @@ export default function Browse() {
           >
             <nav className="flex h-full max-h-[calc(100vh-3.5rem)] w-56 flex-col gap-0.5 overflow-y-auto p-3">
             {sidebarItems.map((item) => {
-              const active = activeSidebar === item.id
+              const active = activeSidebar === item.id && !mapOpen
               const Icon = item.icon
               return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => handleSidebarChange(item.id)}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium ${
-                    active
-                      ? 'bg-emerald-50 text-emerald-700'
-                      : `text-slate-700 ${textButtonHover}`
-                  }`}
-                >
-                  <Icon className={`h-5 w-5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-500'}`} />
-                  {item.label}
-                </button>
+                <div key={item.id}>
+                  <button
+                    type="button"
+                    onClick={() => handleSidebarChange(item.id)}
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium ${
+                      active
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : `text-slate-700 ${textButtonHover}`
+                    }`}
+                  >
+                    <Icon className={`h-5 w-5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-500'}`} />
+                    {item.label}
+                  </button>
+                  {item.id === 'deals' && (
+                    <>
+                      <hr className="my-2 border-gray-200" />
+                      <button
+                        type="button"
+                        onClick={handleOpenMap}
+                        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium ${
+                          mapOpen
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : `text-slate-700 ${textButtonHover}`
+                        }`}
+                      >
+                        <IconMap
+                          className={`h-5 w-5 shrink-0 ${mapOpen ? 'text-emerald-600' : 'text-slate-500'}`}
+                        />
+                        Map
+                      </button>
+                    </>
+                  )}
+                </div>
               )
             })}
           </nav>
@@ -2103,6 +2173,40 @@ export default function Browse() {
         </main>
         </div>
       </div>
+
+      {mapOpen && mapCenter && (
+        <BrowseStoreMap
+          center={mapCenter}
+          radiusMeters={NEARBY_RADIUS_METERS}
+          stores={nearbyStores}
+          onClose={handleCloseMap}
+        />
+      )}
+
+      {mapOpen && !mapCenter && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            {mapLoading ? (
+              <>
+                <h2 className="text-lg font-bold text-slate-900">Loading map</h2>
+                <p className="mt-2 text-sm text-slate-500">Finding your location and nearby stores…</p>
+              </>
+            ) : (
+              <>
+                <h2 className="text-lg font-bold text-slate-900">Location needed</h2>
+                <p className="mt-2 text-sm text-slate-500">{mapError}</p>
+                <button
+                  type="button"
+                  onClick={handleCloseMap}
+                  className="mt-5 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+                >
+                  Close
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
