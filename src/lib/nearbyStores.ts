@@ -1,3 +1,4 @@
+import { snapPointsToLand } from './elevation'
 import { destinationPoint, haversineDistanceMeters } from './geo'
 
 export const DEFAULT_RADIUS_METERS = 5000
@@ -57,25 +58,35 @@ export function persistMapRadiusMeters(radiusMeters: number) {
   localStorage.setItem(MAP_RADIUS_KEY, String(radiusMeters))
 }
 
-export function buildNearbyStores(
+function candidateStorePoints(
   centerLat: number,
   centerLng: number,
   radiusMeters: number,
-): NearbyStore[] {
+): { lat: number; lng: number }[] {
+  return storeCatalog.map((_, index) => {
+    const bearing = (index / storeCatalog.length) * 360 + 18
+    const distance = radiusMeters * (0.42 + ((index * 13) % 40) / 100)
+    return destinationPoint(centerLat, centerLng, distance, bearing)
+  })
+}
+
+export async function buildNearbyStores(
+  centerLat: number,
+  centerLng: number,
+  radiusMeters: number,
+): Promise<NearbyStore[]> {
+  const candidates = candidateStorePoints(centerLat, centerLng, radiusMeters)
+  const snapped = await snapPointsToLand({ lat: centerLat, lng: centerLng }, candidates)
+
   return storeCatalog
-    .map((store, index) => {
-      const bearing = (index / storeCatalog.length) * 360 + 18
-      const distance = radiusMeters * (0.42 + ((index * 13) % 40) / 100)
-      const { lat, lng } = destinationPoint(centerLat, centerLng, distance, bearing)
-      return {
-        id: slugify(store.name),
-        name: store.name,
-        category: store.category,
-        listingCount: store.listingCount,
-        lat,
-        lng,
-      }
-    })
+    .map((store, index) => ({
+      id: slugify(store.name),
+      name: store.name,
+      category: store.category,
+      listingCount: store.listingCount,
+      lat: snapped[index].lat,
+      lng: snapped[index].lng,
+    }))
     .filter(
       (store) =>
         haversineDistanceMeters(centerLat, centerLng, store.lat, store.lng) <= radiusMeters,

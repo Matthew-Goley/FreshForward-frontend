@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import StoreMapView from '../components/StoreMapView'
 import { formatAddressShort, loadDeliveryAddress, resolveMapCenter } from '../lib/address'
+import type { NearbyStore } from '../lib/nearbyStores'
 import {
   MAX_RADIUS_METERS,
   MIN_RADIUS_METERS,
@@ -16,6 +17,7 @@ export default function BrowseMap() {
   const deliveryAddress = loadDeliveryAddress()
   const [radiusMeters, setRadiusMeters] = useState(loadMapRadiusMeters)
   const [center, setCenter] = useState<{ lat: number; lng: number } | null>(null)
+  const [stores, setStores] = useState<NearbyStore[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -43,10 +45,22 @@ export default function BrowseMap() {
     }
   }, [deliveryAddress])
 
-  const stores = useMemo(
-    () => (center ? buildNearbyStores(center.lat, center.lng, radiusMeters) : []),
-    [center, radiusMeters],
-  )
+  useEffect(() => {
+    if (!center) return
+
+    let cancelled = false
+    void buildNearbyStores(center.lat, center.lng, radiusMeters)
+      .then((nextStores) => {
+        if (!cancelled) setStores(nextStores)
+      })
+      .catch(() => {
+        if (!cancelled) setStores([])
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [center, radiusMeters])
 
   function handleRadiusChange(nextRadius: number) {
     setRadiusMeters(nextRadius)
