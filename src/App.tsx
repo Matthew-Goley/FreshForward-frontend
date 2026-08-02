@@ -3,6 +3,7 @@ import { AppProvider } from './lib/AppContext'
 import Layout from './components/Layout'
 import Landing from './pages/Landing'
 import Browse from './pages/Browse'
+import BrowseMap from './pages/BrowseMap'
 import Listings from './pages/Listings'
 import ListingDetail from './pages/ListingDetail'
 import Login from './pages/Login'
@@ -20,6 +21,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/browse" element={<Browse />} />
+          <Route path="/browse/map" element={<BrowseMap />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/restaurant/apply" element={<RestaurantApply />} />

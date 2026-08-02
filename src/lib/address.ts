@@ -155,14 +155,35 @@ export async function fetchCurrentCoordinates(): Promise<{ lat: number; lng: num
 export async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
   const trimmed = address.trim()
   if (!trimmed) return null
+
+  const query = trimmed.includes(',') ? trimmed : `${trimmed}, United States`
   const res = await fetch(
-    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(trimmed)}&format=json&limit=1&countrycodes=us`,
+    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=us&addressdetails=1`,
     { headers: { 'Accept-Language': 'en' } },
   )
   if (!res.ok) return null
-  const data = (await res.json()) as { lat: string; lon: string }[]
+
+  const data = (await res.json()) as { lat: string; lon: string; display_name?: string }[]
   if (data.length === 0) return null
-  return { lat: Number(data[0].lat), lng: Number(data[0].lon) }
+
+  const lat = Number(data[0].lat)
+  const lng = Number(data[0].lon)
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
+  if (Math.abs(lat) > 85 || Math.abs(lng) > 180) return null
+  if (Math.abs(lat) < 0.001 && Math.abs(lng) < 0.001) return null
+
+  return { lat, lng }
+}
+
+export async function resolveMapCenter(
+  deliveryAddress: string,
+): Promise<{ lat: number; lng: number }> {
+  const trimmed = deliveryAddress.trim()
+  if (trimmed) {
+    const geocoded = await geocodeAddress(trimmed)
+    if (geocoded) return geocoded
+  }
+  return fetchCurrentCoordinates()
 }
 
 export function saveAddressSelection(

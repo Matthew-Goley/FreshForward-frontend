@@ -1,18 +1,14 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode, type SVGProps } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import BrowseStoreMap from '../components/BrowseStoreMap'
+import { useEffect, useRef, useState, type ReactNode, type SVGProps } from 'react'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import {
   DELIVERY_ADDRESS_KEY,
   SAVED_ADDRESSES_KEY,
   fetchCurrentAddress,
-  fetchCurrentCoordinates,
   formatAddressShort,
-  geocodeAddress,
   loadInitialAddressState,
   searchAddressSuggestions,
 } from '../lib/address'
 import type { AddressSuggestion, SavedAddress } from '../lib/address'
-import { NEARBY_RADIUS_METERS, buildNearbyStores } from '../lib/nearbyStores'
 
 /* ─── Types ─── */
 
@@ -1658,6 +1654,8 @@ export default function Browse() {
   const [currentLocation, setCurrentLocation] = useState('')
   const [pendingProductId, setPendingProductId] = useState<string | null>(null)
   const [searchParams] = useSearchParams()
+  const location = useLocation()
+  const mapActive = location.pathname === '/browse/map'
   const categoryParam = searchParams.get('category')
   const [activeSidebar, setActiveSidebar] = useState(
     categoryParam && sidebarItems.some((item) => item.id === categoryParam) ? categoryParam : 'home',
@@ -1667,10 +1665,6 @@ export default function Browse() {
   const [itemsLimit, setItemsLimit] = useState(INITIAL_ITEMS_PER_SECTION)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [headerScrolled, setHeaderScrolled] = useState(false)
-  const [mapOpen, setMapOpen] = useState(false)
-  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null)
-  const [mapLoading, setMapLoading] = useState(false)
-  const [mapError, setMapError] = useState('')
   const pageScrollRef = useRef<HTMLDivElement>(null)
   const heroRef = useRef<HTMLDivElement>(null)
   const searchTimerRef = useRef<number | null>(null)
@@ -1758,39 +1752,6 @@ export default function Browse() {
   const handleSidebarChange = (categoryId: string) => {
     setActiveSidebar(categoryId)
     setItemsLimit(INITIAL_ITEMS_PER_SECTION)
-    setMapOpen(false)
-  }
-
-  const nearbyStores = useMemo(
-    () => (mapCenter ? buildNearbyStores(mapCenter.lat, mapCenter.lng) : []),
-    [mapCenter],
-  )
-
-  const handleOpenMap = async () => {
-    setMapOpen(true)
-    setMapLoading(true)
-    setMapError('')
-    setMapCenter(null)
-
-    try {
-      let coords: { lat: number; lng: number } | null = null
-      if (deliveryAddress.trim()) {
-        coords = await geocodeAddress(deliveryAddress)
-      }
-      if (!coords) {
-        coords = await fetchCurrentCoordinates()
-      }
-      setMapCenter(coords)
-    } catch {
-      setMapError('Add an address or allow location access to view nearby stores on the map.')
-    } finally {
-      setMapLoading(false)
-    }
-  }
-
-  const handleCloseMap = () => {
-    setMapOpen(false)
-    setMapError('')
   }
 
   const handlePillChange = (pillId: string | null) => {
@@ -2082,7 +2043,7 @@ export default function Browse() {
           >
             <nav className="flex h-full max-h-[calc(100vh-3.5rem)] w-56 flex-col gap-0.5 overflow-y-auto p-3">
             {sidebarItems.map((item) => {
-              const active = activeSidebar === item.id && !mapOpen
+              const active = activeSidebar === item.id
               const Icon = item.icon
               return (
                 <div key={item.id}>
@@ -2101,20 +2062,19 @@ export default function Browse() {
                   {item.id === 'deals' && (
                     <>
                       <hr className="my-2 border-gray-200" />
-                      <button
-                        type="button"
-                        onClick={handleOpenMap}
+                      <Link
+                        to="/browse/map"
                         className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium ${
-                          mapOpen
+                          mapActive
                             ? 'bg-emerald-50 text-emerald-700'
                             : `text-slate-700 ${textButtonHover}`
                         }`}
                       >
                         <IconMap
-                          className={`h-5 w-5 shrink-0 ${mapOpen ? 'text-emerald-600' : 'text-slate-500'}`}
+                          className={`h-5 w-5 shrink-0 ${mapActive ? 'text-emerald-600' : 'text-slate-500'}`}
                         />
                         Map
-                      </button>
+                      </Link>
                     </>
                   )}
                 </div>
@@ -2173,40 +2133,6 @@ export default function Browse() {
         </main>
         </div>
       </div>
-
-      {mapOpen && mapCenter && (
-        <BrowseStoreMap
-          center={mapCenter}
-          radiusMeters={NEARBY_RADIUS_METERS}
-          stores={nearbyStores}
-          onClose={handleCloseMap}
-        />
-      )}
-
-      {mapOpen && !mapCenter && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-            {mapLoading ? (
-              <>
-                <h2 className="text-lg font-bold text-slate-900">Loading map</h2>
-                <p className="mt-2 text-sm text-slate-500">Finding your location and nearby stores…</p>
-              </>
-            ) : (
-              <>
-                <h2 className="text-lg font-bold text-slate-900">Location needed</h2>
-                <p className="mt-2 text-sm text-slate-500">{mapError}</p>
-                <button
-                  type="button"
-                  onClick={handleCloseMap}
-                  className="mt-5 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
-                >
-                  Close
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
