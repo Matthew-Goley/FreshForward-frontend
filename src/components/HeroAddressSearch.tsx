@@ -91,6 +91,7 @@ export default function HeroAddressSearch({
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const searchTimerRef = useRef<number | null>(null)
+  const searchAbortRef = useRef<AbortController | null>(null)
 
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>(initialAddressState.savedAddresses)
   const [addressDraft, setAddressDraft] = useState('')
@@ -98,6 +99,7 @@ export default function HeroAddressSearch({
   const [panelMode, setPanelMode] = useState<'search' | 'manual'>('search')
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([])
   const [suggestionsLoading, setSuggestionsLoading] = useState(false)
+  const [suggestionsError, setSuggestionsError] = useState(false)
   const [locationLoading, setLocationLoading] = useState(false)
   const [currentLocation, setCurrentLocation] = useState('')
 
@@ -122,25 +124,39 @@ export default function HeroAddressSearch({
     setAddressDraft('')
     setSuggestions([])
     closePanel()
-    navigate('/browse')
+    navigate('/listings')
   }
 
   function handleDraftChange(value: string) {
     setAddressDraft(value)
     if (searchTimerRef.current) window.clearTimeout(searchTimerRef.current)
+    // Abort any in-flight request so a stale response can't overwrite a newer one.
+    searchAbortRef.current?.abort()
     const query = value.trim()
     if (query.length < 2) {
       setSuggestions([])
       setSuggestionsLoading(false)
+      setSuggestionsError(false)
       return
     }
     setSuggestionsLoading(true)
+    setSuggestionsError(false)
+    // FE-6: 600ms debounce sharply reduces request volume to the geocoder.
     searchTimerRef.current = window.setTimeout(() => {
-      searchAddressSuggestions(query)
-        .then(setSuggestions)
-        .catch(() => setSuggestions([]))
-        .finally(() => setSuggestionsLoading(false))
-    }, 300)
+      const controller = new AbortController()
+      searchAbortRef.current = controller
+      searchAddressSuggestions(query, controller.signal)
+        .then((results) => {
+          setSuggestions(results)
+          setSuggestionsLoading(false)
+        })
+        .catch(() => {
+          if (controller.signal.aborted) return // superseded by a newer keystroke
+          setSuggestions([])
+          setSuggestionsError(true)
+          setSuggestionsLoading(false)
+        })
+    }, 600)
   }
 
   async function requestLocation() {
@@ -208,6 +224,7 @@ export default function HeroAddressSearch({
   useEffect(() => {
     return () => {
       if (searchTimerRef.current) window.clearTimeout(searchTimerRef.current)
+      searchAbortRef.current?.abort()
     }
   }, [])
 
@@ -294,9 +311,18 @@ export default function HeroAddressSearch({
                   {suggestionsLoading && (
                     <p className="px-4 py-3 text-sm text-black">Searching addresses…</p>
                   )}
-                  {!suggestionsLoading && addressDraft.trim().length >= 2 && suggestions.length === 0 && (
-                    <p className="px-4 py-3 text-sm text-black">No addresses found. Try a different search.</p>
+                  {!suggestionsLoading && suggestionsError && (
+                    <p className="px-4 py-3 text-sm text-red-600">
+                      Address search is temporarily unavailable. Try again in a moment, or enter your
+                      address manually below.
+                    </p>
                   )}
+                  {!suggestionsLoading &&
+                    !suggestionsError &&
+                    addressDraft.trim().length >= 2 &&
+                    suggestions.length === 0 && (
+                      <p className="px-4 py-3 text-sm text-black">No addresses found. Try a different search.</p>
+                    )}
                   {suggestions.map((s) => (
                     <button
                       key={s.id}
@@ -417,7 +443,7 @@ export default function HeroAddressSearch({
       >
         <Link
           to="/login"
-          state={{ redirectTo: '/browse' }}
+          state={{ redirectTo: '/listings' }}
           className={
             isHero
               ? 'inline-flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-black shadow-sm transition-colors hover:bg-emerald-50'

@@ -1,6 +1,22 @@
 export const DELIVERY_ADDRESS_KEY = 'ff-delivery-address'
 export const SAVED_ADDRESSES_KEY = 'ff-saved-addresses'
 
+// D-23: geocoding provider is swappable via env. Defaults to Nominatim for
+// launch; switching to a keyed Nominatim-compatible provider (LocationIQ,
+// Geoapify, ...) is an env change, not a code change. VITE_* values are
+// public — use referrer restrictions on any key.
+const GEOCODE_URL = (import.meta.env.VITE_GEOCODE_URL ?? 'https://nominatim.openstreetmap.org').replace(
+  /\/+$/,
+  '',
+)
+const GEOCODE_KEY = import.meta.env.VITE_GEOCODE_KEY ?? ''
+
+function geocodeParams(base: Record<string, string>): URLSearchParams {
+  const p = new URLSearchParams(base)
+  if (GEOCODE_KEY) p.set('key', GEOCODE_KEY) // LocationIQ / Geoapify style
+  return p
+}
+
 export interface SavedAddress {
   id: string
   full: string
@@ -94,10 +110,10 @@ function formatSuggestion(result: NominatimSearchResult): AddressSuggestion {
 }
 
 export async function reverseGeocode(lat: number, lon: number): Promise<string> {
-  const res = await fetch(
-    `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
-    { headers: { 'Accept-Language': 'en' } },
-  )
+  const params = geocodeParams({ lat: String(lat), lon: String(lon), format: 'json' })
+  const res = await fetch(`${GEOCODE_URL}/reverse?${params}`, {
+    headers: { 'Accept-Language': 'en' },
+  })
   if (!res.ok) throw new Error('Could not resolve address')
   const data = (await res.json()) as {
     display_name?: string
@@ -119,16 +135,37 @@ export async function reverseGeocode(lat: number, lon: number): Promise<string> 
   return data.display_name?.split(',').slice(0, 2).join(',') ?? 'Current location'
 }
 
-export async function searchAddressSuggestions(query: string): Promise<AddressSuggestion[]> {
+// Users backspace constantly; cache successful lookups so repeats are free.
+const suggestionCache = new Map<string, AddressSuggestion[]>()
+
+export async function searchAddressSuggestions(
+  query: string,
+  signal?: AbortSignal,
+): Promise<AddressSuggestion[]> {
   const trimmed = query.trim()
   if (trimmed.length < 2) return []
-  const res = await fetch(
-    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(trimmed)}&format=json&addressdetails=1&limit=6&countrycodes=us`,
-    { headers: { 'Accept-Language': 'en' } },
-  )
-  if (!res.ok) return []
+
+  const cached = suggestionCache.get(trimmed.toLowerCase())
+  if (cached) return cached
+
+  const params = geocodeParams({
+    q: trimmed,
+    format: 'json',
+    addressdetails: '1',
+    limit: '6',
+    countrycodes: 'us',
+  })
+  const res = await fetch(`${GEOCODE_URL}/search?${params}`, {
+    headers: { 'Accept-Language': 'en' },
+    signal,
+  })
+  // Throw on failure so the UI can distinguish "search unavailable" (e.g.
+  // rate-limited) from a genuine "no matches" empty result.
+  if (!res.ok) throw new Error(`Address search failed (${res.status})`)
   const data = (await res.json()) as NominatimSearchResult[]
-  return data.map(formatSuggestion)
+  const suggestions = data.map(formatSuggestion)
+  suggestionCache.set(trimmed.toLowerCase(), suggestions)
+  return suggestions
 }
 
 export async function fetchCurrentAddress(): Promise<string> {

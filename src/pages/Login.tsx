@@ -49,10 +49,6 @@ export default function Login() {
       }
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <p className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          Demo restaurant: <span className="font-medium">demo@restaurant.test</span> / any password
-        </p>
-
         {error && (
           <p
             role="alert"
