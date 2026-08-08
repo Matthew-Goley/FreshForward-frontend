@@ -89,7 +89,7 @@ const footerBusinessLinks = [
 type SplitSectionProps = {
   title: string
   body: string[]
-  image: { src: string; alt: string }
+  image: { src: string; webpSrc?: string; alt: string; width?: number; height?: number }
   reverse?: boolean
   className?: string
   cta?: { label: string; to: string; variant?: 'primary' | 'outline' }
@@ -112,11 +112,18 @@ function SplitSection({
           }`}
         >
           <div className="w-full">
-            <img
-              src={image.src}
-              alt={image.alt}
-              className="aspect-[5/4] w-full object-cover sm:min-h-[20rem] lg:min-h-[28rem]"
-            />
+            <picture>
+              {image.webpSrc && <source srcSet={image.webpSrc} type="image/webp" />}
+              <img
+                src={image.src}
+                alt={image.alt}
+                loading="lazy"
+                decoding="async"
+                width={image.width}
+                height={image.height}
+                className="aspect-[5/4] w-full object-cover sm:min-h-[20rem] lg:min-h-[28rem]"
+              />
+            </picture>
           </div>
 
           <div className="flex flex-col justify-center">
@@ -167,7 +174,10 @@ const missionSection = {
   reverse: true,
   image: {
     src: '/mission-section.jpg',
+    webpSrc: '/mission-section.webp',
     alt: 'Prepared meals packaged in a restaurant kitchen',
+    width: 1200,
+    height: 900,
   },
 }
 
@@ -296,7 +306,15 @@ export default function Landing() {
 
       <section className="relative isolate overflow-hidden py-16 sm:min-h-[36rem] sm:py-20">
         <div aria-hidden className="how-it-works-map-wrap">
-          <img src={howItWorksMapImage} alt="" className="how-it-works-map-image" />
+          <img
+            src={howItWorksMapImage}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            width={1400}
+            height={933}
+            className="how-it-works-map-image"
+          />
         </div>
         <div
           aria-hidden
