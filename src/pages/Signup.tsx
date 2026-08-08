@@ -7,6 +7,7 @@ import AuthLayout, {
   authSubmitClassName,
 } from '../components/AuthLayout'
 import { useApp } from '../lib/AppContext'
+import { ApiError } from '../lib/api'
 import type { AccountType } from '../types'
 
 const accountTypeOptions: { value: AccountType; label: string; description: string }[] = [
@@ -32,12 +33,13 @@ export default function Signup() {
     setError('')
     setLoading(true)
     try {
-      const user = await signup(email, password, accountType)
-      navigate(
-        user.accountType === 'restaurant' ? '/restaurant/dashboard' : redirectTo || '/listings',
+      // D-10: accountType is not sent to the API — the radio is routing UI only.
+      await signup(email, password)
+      navigate(accountType === 'restaurant' ? '/restaurant/apply' : redirectTo || '/listings')
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : 'Could not create your account. Please try again.',
       )
-    } catch {
-      setError('Could not create your account. Please try again.')
     } finally {
       setLoading(false)
     }

@@ -8,6 +8,7 @@ import AuthLayout, {
   authTextareaClassName,
 } from '../components/AuthLayout'
 import { useApp } from '../lib/AppContext'
+import { ApiError } from '../lib/api'
 
 const partnerHero = {
   line1: 'Turn surplus into sales.',
@@ -33,8 +34,10 @@ export default function RestaurantApply() {
     try {
       await submitApplication({ name, contactEmail, address, description })
       setSubmitted(true)
-    } catch {
-      setError('Could not submit your application. Please try again.')
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : 'Could not submit your application. Please try again.',
+      )
     } finally {
       setLoading(false)
     }
@@ -61,10 +64,10 @@ export default function RestaurantApply() {
             <span className="font-medium">{contactEmail}</span>.
           </p>
           <Link
-            to="/"
+            to="/restaurant/dashboard"
             className={`${authSubmitClassName} mt-0 inline-block text-center no-underline`}
           >
-            Back to home
+            Go to your dashboard
           </Link>
         </div>
       </AuthLayout>

@@ -1,17 +1,53 @@
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useApp } from '../lib/AppContext'
+import * as api from '../lib/api'
+import { ApiError } from '../lib/api'
+import type { Listing } from '../types'
 
 export default function ListingDetail() {
   const { id } = useParams<{ id: string }>()
-  const { listings, currentUser } = useApp()
+  const { currentUser } = useApp()
   const navigate = useNavigate()
 
-  const listing = listings.find((l) => l.id === id)
+  const [listing, setListing] = useState<Listing | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  if (!listing) {
+  useEffect(() => {
+    if (!id) return
+    queueMicrotask(() => {
+      setLoading(true)
+      setError('')
+      void api
+        .getListing(id)
+        .then(setListing)
+        .catch((err) => {
+          setListing(null)
+          setError(
+            err instanceof ApiError && err.status === 404
+              ? 'Listing not found.'
+              : err instanceof ApiError
+                ? err.message
+                : 'Could not load this listing. Please try again shortly.',
+          )
+        })
+        .finally(() => setLoading(false))
+    })
+  }, [id])
+
+  if (loading) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-8">
-        <p>Listing not found.</p>
+        <p className="text-gray-500">Loading listing…</p>
+      </div>
+    )
+  }
+
+  if (error || !listing) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-8">
+        <p role="alert">{error || 'Listing not found.'}</p>
         <Link to="/listings" className="underline">
           Back to listings
         </Link>
@@ -20,6 +56,7 @@ export default function ListingDetail() {
   }
 
   const listingId = listing.id
+  const soldOut = listing.quantityAvailable === 0
 
   function handleBuy() {
     if (!currentUser) {
@@ -45,7 +82,7 @@ export default function ListingDetail() {
         </div>
         <div className="flex justify-between border-b border-gray-200 py-1">
           <dt>Quantity available</dt>
-          <dd>{listing.quantityAvailable}</dd>
+          <dd>{soldOut ? <span className="font-semibold text-red-600">Sold out</span> : listing.quantityAvailable}</dd>
         </div>
         <div className="flex justify-between border-b border-gray-200 py-1">
           <dt>Pickup window</dt>
@@ -53,8 +90,12 @@ export default function ListingDetail() {
         </div>
       </dl>
 
-      <button onClick={handleBuy} className="mt-6 border border-gray-400 px-4 py-2">
-        Buy
+      <button
+        onClick={handleBuy}
+        disabled={soldOut}
+        className="mt-6 border border-gray-400 px-4 py-2 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {soldOut ? 'Sold out' : 'Buy'}
       </button>
     </div>
   )

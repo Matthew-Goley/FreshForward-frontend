@@ -21,7 +21,7 @@ const howItWorks = [
     title: 'Browse Local Surplus',
     body: 'Restaurants and grocers list excess food at deep discounts.',
     buttonLabel: 'Browse Now',
-    href: '/browse',
+    href: '/listings',
   },
   {
     emoji: '🤝',
@@ -176,7 +176,7 @@ const shopperValueSection = {
   body: [
     'Pick up discounted surplus from local restaurants and grocers, with photos, pickup windows, and prices well below what you would pay on delivery apps.',
   ],
-  cta: { label: 'Browse Now', to: '/browse' },
+  cta: { label: 'Browse Now', to: '/listings' },
   image: {
     src: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&h=900&q=85',
     alt: 'Prepared meals and fresh food on a table',
@@ -342,7 +342,7 @@ export default function Landing() {
               <ul className="mt-4 space-y-2.5 text-sm">
                 {footerCategories.map(({ label, id }) => (
                   <li key={id}>
-                    <Link to={`/browse?category=${id}`} className="transition-colors hover:text-white">
+                    <Link to="/listings" className="transition-colors hover:text-white">
                       {label}
                     </Link>
                   </li>
