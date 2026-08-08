@@ -24,7 +24,11 @@ export async function fetchElevations(
   return data.elevation
 }
 
-/** Move each water point toward `center` until it sits on land (or give up at min distance). */
+/**
+ * Move water points toward `center` until they sit on land.
+ * Points already on land keep their original position.
+ * On API failure, returns the original points unchanged.
+ */
 export async function snapPointsToLand(
   center: { lat: number; lng: number },
   points: { lat: number; lng: number }[],
@@ -32,38 +36,59 @@ export async function snapPointsToLand(
 ): Promise<{ lat: number; lng: number }[]> {
   if (points.length === 0) return []
 
-  const working = points.map((p) => ({ ...p }))
-  const distanceFractions = [1, 0.75, 0.55, 0.4, 0.28, 0.18, 0.1]
+  try {
+    const working = points.map((p) => ({ ...p }))
+    const resolved = new Array<boolean>(points.length).fill(false)
+    const distanceFractions = [1, 0.75, 0.55, 0.4, 0.28, 0.18, 0.1]
 
-  for (const fraction of distanceFractions) {
-    const batch = working.map((_, index) => {
-      if (fraction === 1) return points[index]
-      const original = points[index]
-      return interpolateTowardCenter(center.lat, center.lng, original.lat, original.lng, 1 - fraction)
-    })
+    for (const fraction of distanceFractions) {
+      const unresolvedIndexes = resolved
+        .map((done, index) => (done ? -1 : index))
+        .filter((index) => index >= 0)
 
-    const elevations = await fetchElevations(batch)
-    for (let i = 0; i < batch.length; i++) {
-      if (isLandElevation(elevations[i])) {
-        working[i] = batch[i]
+      if (unresolvedIndexes.length === 0) break
+
+      const batch = unresolvedIndexes.map((index) => {
+        if (fraction === 1) return points[index]
+        return interpolateTowardCenter(
+          center.lat,
+          center.lng,
+          points[index].lat,
+          points[index].lng,
+          1 - fraction,
+        )
+      })
+
+      const elevations = await fetchElevations(batch)
+      for (let i = 0; i < unresolvedIndexes.length; i++) {
+        const index = unresolvedIndexes[i]
+        if (isLandElevation(elevations[i])) {
+          working[index] = batch[i]
+          resolved[index] = true
+        }
       }
     }
-  }
 
-  const finalElevations = await fetchElevations(working)
-  return working.map((point, index) => {
-    if (isLandElevation(finalElevations[index])) return point
-    return interpolateTowardCenter(
-      center.lat,
-      center.lng,
-      point.lat,
-      point.lng,
-      0.85,
-      minDistanceMeters,
-      center.lat,
-      center.lng,
-    )
-  })
+    // Last resort: pull remaining water points close to the user
+    for (let index = 0; index < working.length; index++) {
+      if (resolved[index]) continue
+      working[index] = interpolateTowardCenter(
+        center.lat,
+        center.lng,
+        points[index].lat,
+        points[index].lng,
+        0.85,
+        minDistanceMeters,
+        center.lat,
+        center.lng,
+      )
+    }
+
+    return working
+  } catch {
+    // Keep pins visible even if elevation lookup fails / is rate-limited
+    return points.map((p) => ({ ...p }))
+  }
 }
 
 function interpolateTowardCenter(

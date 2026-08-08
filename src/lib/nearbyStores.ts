@@ -38,8 +38,17 @@ const storeCatalog: { name: string; category: string; listingCount: number }[] =
   { name: 'Bodega Express', category: 'Convenience', listingCount: 1 },
 ]
 
-function slugify(name: string) {
+export function slugifyStoreName(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+}
+
+export function getStoreNameFromSlug(slug: string): string | null {
+  const match = storeCatalog.find((store) => slugifyStoreName(store.name) === slug)
+  return match?.name ?? null
+}
+
+function slugify(name: string) {
+  return slugifyStoreName(name)
 }
 
 export function loadMapRadiusMeters(): number {
@@ -65,9 +74,40 @@ function candidateStorePoints(
 ): { lat: number; lng: number }[] {
   return storeCatalog.map((_, index) => {
     const bearing = (index / storeCatalog.length) * 360 + 18
-    const distance = radiusMeters * (0.42 + ((index * 13) % 40) / 100)
+    // Keep a little headroom so land-snapping toward center still stays in-radius
+    const distance = radiusMeters * (0.28 + ((index * 13) % 35) / 100)
     return destinationPoint(centerLat, centerLng, distance, bearing)
   })
+}
+
+function toStores(
+  points: { lat: number; lng: number }[],
+  centerLat: number,
+  centerLng: number,
+  radiusMeters: number,
+): NearbyStore[] {
+  return storeCatalog
+    .map((store, index) => ({
+      id: slugify(store.name),
+      name: store.name,
+      category: store.category,
+      listingCount: store.listingCount,
+      lat: points[index].lat,
+      lng: points[index].lng,
+    }))
+    .filter(
+      (store) =>
+        haversineDistanceMeters(centerLat, centerLng, store.lat, store.lng) <= radiusMeters + 1,
+    )
+}
+
+/** Sync mock pins — used immediately so the map never goes blank while snapping. */
+export function buildNearbyStoresSync(
+  centerLat: number,
+  centerLng: number,
+  radiusMeters: number,
+): NearbyStore[] {
+  return toStores(candidateStorePoints(centerLat, centerLng, radiusMeters), centerLat, centerLng, radiusMeters)
 }
 
 export async function buildNearbyStores(
@@ -77,20 +117,7 @@ export async function buildNearbyStores(
 ): Promise<NearbyStore[]> {
   const candidates = candidateStorePoints(centerLat, centerLng, radiusMeters)
   const snapped = await snapPointsToLand({ lat: centerLat, lng: centerLng }, candidates)
-
-  return storeCatalog
-    .map((store, index) => ({
-      id: slugify(store.name),
-      name: store.name,
-      category: store.category,
-      listingCount: store.listingCount,
-      lat: snapped[index].lat,
-      lng: snapped[index].lng,
-    }))
-    .filter(
-      (store) =>
-        haversineDistanceMeters(centerLat, centerLng, store.lat, store.lng) <= radiusMeters,
-    )
+  return toStores(snapped, centerLat, centerLng, radiusMeters)
 }
 
 export function formatRadiusMiles(meters: number) {

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import StoreMapView from '../components/StoreMapView'
 import { formatAddressShort, loadDeliveryAddress, resolveMapCenter } from '../lib/address'
 import type { NearbyStore } from '../lib/nearbyStores'
@@ -8,18 +8,29 @@ import {
   MIN_RADIUS_METERS,
   RADIUS_STEP_METERS,
   buildNearbyStores,
+  buildNearbyStoresSync,
   formatRadiusMiles,
   loadMapRadiusMeters,
   persistMapRadiusMeters,
 } from '../lib/nearbyStores'
 
+const RADIUS_DEBOUNCE_MS = 280
+
 export default function BrowseMap() {
+  const navigate = useNavigate()
   const deliveryAddress = loadDeliveryAddress()
   const [radiusMeters, setRadiusMeters] = useState(loadMapRadiusMeters)
+  const [debouncedRadius, setDebouncedRadius] = useState(radiusMeters)
   const [center, setCenter] = useState<{ lat: number; lng: number } | null>(null)
-  const [stores, setStores] = useState<NearbyStore[]>([])
+  const [snappedStores, setSnappedStores] = useState<NearbyStore[] | null>(null)
+  const [snappedRadius, setSnappedRadius] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedRadius(radiusMeters), RADIUS_DEBOUNCE_MS)
+    return () => window.clearTimeout(timer)
+  }, [radiusMeters])
 
   useEffect(() => {
     let cancelled = false
@@ -49,18 +60,25 @@ export default function BrowseMap() {
     if (!center) return
 
     let cancelled = false
-    void buildNearbyStores(center.lat, center.lng, radiusMeters)
-      .then((nextStores) => {
-        if (!cancelled) setStores(nextStores)
-      })
-      .catch(() => {
-        if (!cancelled) setStores([])
-      })
+    void buildNearbyStores(center.lat, center.lng, debouncedRadius).then((nextStores) => {
+      if (cancelled || nextStores.length === 0) return
+      setSnappedStores(nextStores)
+      setSnappedRadius(debouncedRadius)
+    })
 
     return () => {
       cancelled = true
     }
-  }, [center, radiusMeters])
+  }, [center, debouncedRadius])
+
+  const syncStores = useMemo(
+    () => (center ? buildNearbyStoresSync(center.lat, center.lng, radiusMeters) : []),
+    [center, radiusMeters],
+  )
+
+  // Prefer land-snapped pins once they match the current radius; otherwise keep sync pins visible
+  const stores =
+    snappedStores && snappedRadius === radiusMeters ? snappedStores : syncStores
 
   function handleRadiusChange(nextRadius: number) {
     setRadiusMeters(nextRadius)
@@ -138,7 +156,12 @@ export default function BrowseMap() {
         )}
 
         {!loading && center && (
-          <StoreMapView center={center} radiusMeters={radiusMeters} stores={stores} />
+          <StoreMapView
+            center={center}
+            radiusMeters={radiusMeters}
+            stores={stores}
+            onStoreSelect={(store) => navigate(`/browse?store=${encodeURIComponent(store.id)}`)}
+          />
         )}
       </div>
 
