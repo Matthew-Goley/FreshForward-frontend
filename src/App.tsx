@@ -27,6 +27,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/browse" element={<Browse />} />
+            <Route path="/browse/map" element={<BrowseMap />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route
