@@ -78,7 +78,7 @@ const footerCategories = [
 
 const footerCompanyLinks = [
   { label: 'About Us', to: '/company' },
-  { label: 'Contact Us', to: '/company' },
+  { label: 'Contact Us', to: 'mailto:freshforward2026@gmail.com' },
 ]
 
 const footerBusinessLinks = [
@@ -373,9 +373,15 @@ export default function Landing() {
               <ul className="mt-4 space-y-2.5 text-sm">
                 {footerCompanyLinks.map(({ label, to }) => (
                   <li key={label}>
-                    <Link to={to} className="transition-colors hover:text-white">
-                      {label}
-                    </Link>
+                    {to.startsWith('mailto:') ? (
+                      <a href={to} className="transition-colors hover:text-white">
+                        {label}
+                      </a>
+                    ) : (
+                      <Link to={to} className="transition-colors hover:text-white">
+                        {label}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
