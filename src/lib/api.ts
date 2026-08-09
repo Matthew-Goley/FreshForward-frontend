@@ -1,159 +1,350 @@
 import type {
-  AccountType,
   ApplicationInput,
+  AccountType,
   CurrentUser,
   Listing,
   ListingInput,
   Order,
+  OrderStatus,
   Restaurant,
+  RestaurantStatus,
 } from '../types'
-import { initialListings, initialOrders, initialRestaurants } from './mockData'
+import { API_BASE_URL } from './config'
 
-// Mock backend. Every function below has the signature a real `fetch` call
-// would have — async, Promise<T> return, same request/response shapes — so
-// swapping to a live backend later means rewriting these bodies to call
-// `fetch(`${API_BASE_URL}/...`)` instead of touching the in-memory arrays.
-// Nothing outside this file (AppContext, pages) should need to change.
+// Thin fetch layer over the FreshForward API. This file is the only place that
+// knows about the wire format: snake_case keys, integer ids, and integer-cent
+// prices all convert to frontend shapes here and nowhere else (NEEDED_FIXES.md
+// D-1..D-5).
 
-let listingsDb: Listing[] = [...initialListings]
-let ordersDb: Order[] = [...initialOrders]
-let restaurantsDb: Restaurant[] = [...initialRestaurants]
+// --- token ---
 
-let idCounter = 0
-function nextId(prefix: string) {
-  idCounter += 1
-  return `${prefix}-${idCounter}`
+const TOKEN_KEY = 'ff-auth-token'
+
+export function getToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY)
 }
 
-export interface LoginRequest {
+export function setToken(token: string | null): void {
+  if (token) localStorage.setItem(TOKEN_KEY, token)
+  else localStorage.removeItem(TOKEN_KEY)
+}
+
+export class ApiError extends Error {
+  status: number
+
+  constructor(status: number, message: string) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+  }
+}
+
+function extractDetail(body: unknown, status: number): string {
+  const d = (body as { detail?: unknown })?.detail
+  if (typeof d === 'string') return d
+  if (Array.isArray(d)) return d.map((e) => (e as { msg?: string })?.msg ?? 'Invalid input').join(', ')
+  return `Request failed (${status})`
+}
+
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const token = getToken()
+  const isForm = init.body instanceof URLSearchParams
+
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers: {
+      ...(init.body && !isForm ? { 'Content-Type': 'application/json' } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...init.headers,
+    },
+  })
+
+  if (res.status === 401) {
+    setToken(null) // D-11: clear, do not redirect
+    throw new ApiError(401, 'Your session has expired. Please sign in again.')
+  }
+  if (!res.ok) {
+    const body = await res.json().catch(() => null)
+    throw new ApiError(res.status, extractDetail(body, res.status))
+  }
+  if (res.status === 204) return undefined as T
+  return (await res.json()) as T
+}
+
+// --- wire shapes (see NEEDED_FIXES.md §2.2) ---
+
+interface WireUser {
+  id: number
+  username: string
   email: string
-  password: string
+  account_type: AccountType
+  is_admin: boolean
+  restaurant_id: number | null
+  created_at: string
 }
 
-export interface SignupRequest {
-  email: string
-  password: string
-  accountType: AccountType
+interface WireListing {
+  id: number
+  restaurant_id: number
+  restaurant_name: string
+  title: string
+  description: string
+  original_price: number // integer cents
+  discounted_price: number // integer cents
+  quantity_available: number
+  pickup_window: string
+  created_at: string
 }
 
-export async function login({ email, password }: LoginRequest): Promise<CurrentUser> {
-  void password
-  const restaurant = restaurantsDb.find((r) => r.contactEmail.toLowerCase() === email.toLowerCase())
-  return restaurant
-    ? { email, accountType: 'restaurant', restaurantId: restaurant.id }
-    : { email, accountType: 'customer' }
+interface WireRestaurant {
+  id: number
+  owner_user_id: number
+  name: string
+  contact_email: string
+  address: string
+  description: string
+  status: RestaurantStatus
+  rejection_reason: string | null
+  created_at: string
 }
 
-export async function signup({ email, password, accountType }: SignupRequest): Promise<CurrentUser> {
-  void password
-  if (accountType === 'customer') {
-    return { email, accountType: 'customer' }
+interface WireOrder {
+  id: number
+  listing_id: number
+  listing_title: string
+  restaurant_name: string
+  customer_email: string
+  pickup_window: string
+  quantity: number
+  price: number // integer cents, total for the line
+  status: OrderStatus
+  created_at: string
+}
+
+interface WireOrderCreate {
+  order: WireOrder
+  checkout_url: string
+  session_id: string
+}
+
+// --- mappers ---
+
+const centsToDollars = (c: number) => c / 100
+// D-2: Math.round is mandatory. 19.99 * 100 === 1998.9999999999998
+const dollarsToCents = (d: number) => Math.round(d * 100)
+
+function toCurrentUser(w: WireUser): CurrentUser {
+  return {
+    id: String(w.id),
+    username: w.username,
+    email: w.email,
+    accountType: w.account_type,
+    isAdmin: w.is_admin,
+    restaurantId: w.restaurant_id === null ? null : String(w.restaurant_id),
   }
-
-  const existing = restaurantsDb.find((r) => r.contactEmail.toLowerCase() === email.toLowerCase())
-  if (existing) {
-    return { email, accountType: 'restaurant', restaurantId: existing.id }
-  }
-
-  const restaurant: Restaurant = {
-    id: nextId('rest'),
-    name: email,
-    contactEmail: email,
-    address: '',
-    description: '',
-    status: 'pending',
-  }
-  restaurantsDb = [...restaurantsDb, restaurant]
-  return { email, accountType: 'restaurant', restaurantId: restaurant.id }
 }
+
+function toListing(w: WireListing): Listing {
+  return {
+    id: String(w.id),
+    restaurantId: String(w.restaurant_id),
+    restaurantName: w.restaurant_name,
+    title: w.title,
+    description: w.description,
+    originalPrice: centsToDollars(w.original_price),
+    discountedPrice: centsToDollars(w.discounted_price),
+    quantityAvailable: w.quantity_available,
+    pickupWindow: w.pickup_window,
+    createdAt: w.created_at,
+  }
+}
+
+function toRestaurant(w: WireRestaurant): Restaurant {
+  return {
+    id: String(w.id),
+    name: w.name,
+    contactEmail: w.contact_email,
+    address: w.address,
+    description: w.description,
+    status: w.status,
+    rejectionReason: w.rejection_reason,
+  }
+}
+
+function toOrder(w: WireOrder): Order {
+  return {
+    id: String(w.id),
+    listingId: String(w.listing_id),
+    listingTitle: w.listing_title,
+    restaurantName: w.restaurant_name,
+    customerEmail: w.customer_email,
+    pickupWindow: w.pickup_window,
+    quantity: w.quantity,
+    price: centsToDollars(w.price),
+    status: w.status,
+    createdAt: w.created_at,
+  }
+}
+
+function fromListingInput(input: ListingInput) {
+  return {
+    title: input.title,
+    description: input.description,
+    original_price: dollarsToCents(input.originalPrice),
+    discounted_price: dollarsToCents(input.discountedPrice),
+    quantity_available: input.quantityAvailable,
+    pickup_window: input.pickupWindow,
+  }
+}
+
+// --- auth ---
+
+// D-6: the OAuth2 form field is named "username" but takes the email.
+export async function login(email: string, password: string): Promise<CurrentUser> {
+  const body = new URLSearchParams({ username: email, password })
+  const token = await request<{ access_token: string }>('/auth/login', {
+    method: 'POST',
+    body,
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  })
+  setToken(token.access_token)
+  return getCurrentUser()
+}
+
+// D-8: register, then log in. Two calls, one token issuer. No accountType (D-10).
+export async function signup(email: string, password: string): Promise<CurrentUser> {
+  await request<WireUser>('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ email, password, username: null }),
+  })
+  return login(email, password)
+}
+
+export async function getCurrentUser(): Promise<CurrentUser> {
+  return toCurrentUser(await request<WireUser>('/auth/me'))
+}
+
+// --- listings ---
 
 export async function getListings(): Promise<Listing[]> {
-  return listingsDb
+  const wires = await request<WireListing[]>('/listings')
+  return wires.map(toListing)
 }
 
-export async function getListing(id: string): Promise<Listing | undefined> {
-  return listingsDb.find((l) => l.id === id)
+export async function getListing(id: string): Promise<Listing> {
+  return toListing(await request<WireListing>(`/listings/${id}`))
 }
 
-export async function getMyListings(restaurantId: string): Promise<Listing[]> {
-  return listingsDb.filter((l) => l.restaurantId === restaurantId)
+export async function getMyListings(): Promise<Listing[]> {
+  const wires = await request<WireListing[]>('/restaurants/me/listings')
+  return wires.map(toListing)
 }
 
-export async function createListing(restaurantId: string, input: ListingInput): Promise<Listing> {
-  const restaurant = restaurantsDb.find((r) => r.id === restaurantId)
-  if (!restaurant) {
-    throw new Error('Unknown restaurant')
-  }
-  const listing: Listing = {
-    id: nextId('listing'),
-    restaurantId: restaurant.id,
-    restaurantName: restaurant.name,
-    ...input,
-  }
-  listingsDb = [...listingsDb, listing]
-  return listing
+export async function createListing(input: ListingInput): Promise<Listing> {
+  return toListing(
+    await request<WireListing>('/restaurants/me/listings', {
+      method: 'POST',
+      body: JSON.stringify(fromListingInput(input)),
+    }),
+  )
 }
 
 export async function updateListing(id: string, input: ListingInput): Promise<Listing> {
-  listingsDb = listingsDb.map((l) => (l.id === id ? { ...l, ...input } : l))
-  const updated = listingsDb.find((l) => l.id === id)
-  if (!updated) {
-    throw new Error('Listing not found')
-  }
-  return updated
+  return toListing(
+    await request<WireListing>(`/restaurants/me/listings/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(fromListingInput(input)),
+    }),
+  )
 }
 
 export async function deleteListing(id: string): Promise<void> {
-  listingsDb = listingsDb.filter((l) => l.id !== id)
+  await request<void>(`/restaurants/me/listings/${id}`, { method: 'DELETE' })
 }
 
-export async function getRestaurants(): Promise<Restaurant[]> {
-  return restaurantsDb
-}
-
-export async function getRestaurant(id: string): Promise<Restaurant | undefined> {
-  return restaurantsDb.find((r) => r.id === id)
-}
+// --- restaurants ---
 
 export async function submitRestaurantApplication(input: ApplicationInput): Promise<Restaurant> {
-  const existing = restaurantsDb.find((r) => r.contactEmail.toLowerCase() === input.contactEmail.toLowerCase())
-  if (existing) {
-    const updated: Restaurant = { ...existing, ...input, status: 'pending' }
-    restaurantsDb = restaurantsDb.map((r) => (r.id === existing.id ? updated : r))
-    return updated
+  return toRestaurant(
+    await request<WireRestaurant>('/restaurants/apply', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: input.name,
+        contact_email: input.contactEmail,
+        address: input.address,
+        description: input.description,
+      }),
+    }),
+  )
+}
+
+// Returns null rather than throwing, so callers can branch on "no restaurant yet".
+export async function getMyRestaurant(): Promise<Restaurant | null> {
+  try {
+    return toRestaurant(await request<WireRestaurant>('/restaurants/me'))
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) return null
+    throw err
   }
-  const restaurant: Restaurant = { id: nextId('rest'), ...input, status: 'pending' }
-  restaurantsDb = [...restaurantsDb, restaurant]
-  return restaurant
 }
 
-export async function placeOrder(listingId: string, customerEmail: string): Promise<Order> {
-  const listing = listingsDb.find((l) => l.id === listingId)
-  if (!listing) {
-    throw new Error('Listing not found')
-  }
-  const order: Order = {
-    id: nextId('order'),
-    listingId: listing.id,
-    listingTitle: listing.title,
-    restaurantName: listing.restaurantName,
-    pickupWindow: listing.pickupWindow,
-    price: listing.discountedPrice,
-    customerEmail,
-  }
-  ordersDb = [...ordersDb, order]
-  return order
+export async function getPendingRestaurants(): Promise<Restaurant[]> {
+  const wires = await request<WireRestaurant[]>('/restaurants/pending')
+  return wires.map(toRestaurant)
 }
 
-export async function getOrders(): Promise<Order[]> {
-  return ordersDb
+export async function approveRestaurant(id: string): Promise<Restaurant> {
+  return toRestaurant(
+    await request<WireRestaurant>(`/restaurants/${id}/approve`, { method: 'POST' }),
+  )
 }
 
-export async function getOrder(id: string): Promise<Order | undefined> {
-  return ordersDb.find((o) => o.id === id)
+export async function rejectRestaurant(id: string, reason: string): Promise<Restaurant> {
+  return toRestaurant(
+    await request<WireRestaurant>(`/restaurants/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+  )
 }
 
-export async function getMyOrders(restaurantId: string): Promise<Order[]> {
-  const myListingIds = new Set(listingsDb.filter((l) => l.restaurantId === restaurantId).map((l) => l.id))
-  return ordersDb.filter((o) => myListingIds.has(o.listingId))
+// --- orders ---
+
+// D-4: listing_id must be a NUMBER on the wire.
+export async function placeOrder(
+  listingId: string,
+  quantity: number,
+): Promise<{ order: Order; checkoutUrl: string; sessionId: string }> {
+  const w = await request<WireOrderCreate>('/orders', {
+    method: 'POST',
+    body: JSON.stringify({ listing_id: Number(listingId), quantity }),
+  })
+  return { order: toOrder(w.order), checkoutUrl: w.checkout_url, sessionId: w.session_id }
+}
+
+export async function getMyOrders(): Promise<Order[]> {
+  const wires = await request<WireOrder[]>('/orders/me')
+  return wires.map(toOrder)
+}
+
+export async function getRestaurantOrders(): Promise<Order[]> {
+  const wires = await request<WireOrder[]>('/restaurants/me/orders')
+  return wires.map(toOrder)
+}
+
+export async function getOrder(id: string): Promise<Order> {
+  return toOrder(await request<WireOrder>(`/orders/${id}`))
+}
+
+export async function getOrderBySession(sessionId: string): Promise<Order> {
+  return toOrder(await request<WireOrder>(`/orders/by-session/${sessionId}`))
+}
+
+export async function updateOrderStatus(id: string, status: OrderStatus): Promise<Order> {
+  return toOrder(
+    await request<WireOrder>(`/orders/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
+  )
 }

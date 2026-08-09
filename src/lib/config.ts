@@ -1,5 +1,7 @@
-// Base URL for the live backend once it exists. Unused for now — everything
-// in api.ts runs against in-memory mock data — but wired in here so turning
-// on real requests later is a one-line change in api.ts, not a hunt for
-// where to put it.
-export const API_BASE_URL: string = import.meta.env.VITE_API_URL ?? ''
+const raw = import.meta.env.VITE_API_URL ?? ''
+// Defensive: a trailing slash produces "//listings", which some proxies treat as a distinct path.
+export const API_BASE_URL: string = raw.replace(/\/+$/, '')
+
+if (import.meta.env.PROD && !API_BASE_URL) {
+  console.error('VITE_API_URL is not set. All API calls will fail.')
+}
