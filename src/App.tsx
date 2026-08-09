@@ -3,6 +3,7 @@ import { AppProvider } from './lib/AppContext'
 import ErrorBoundary from './components/ErrorBoundary'
 import RequireAuth from './components/RequireAuth'
 import Layout from './components/Layout'
+import VercelAnalytics from './components/VercelAnalytics'
 import Landing from './pages/Landing'
 import Browse from './pages/Browse'
 import BrowseMap from './pages/BrowseMap'
@@ -24,6 +25,7 @@ function App() {
     <ErrorBoundary>
       <AppProvider>
         <BrowserRouter>
+          <VercelAnalytics />
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/browse" element={<Browse />} />
