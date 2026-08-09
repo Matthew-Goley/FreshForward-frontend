@@ -53,3 +53,13 @@ See frontend/backend READMEs. Frontend: React + TypeScript + Vite + Tailwind CSS
 ## 9. Open Questions
 - Platform fee structure: flat fee vs. percentage, and whether Stripe's processing fee is absorbed or passed to customer
 - Geographic scope: MVP is technically usable nationwide, but in-app copy/marketing will target the Massachusetts area only
+
+# New Idea
+
+## Core
+Service for resturants, B2B, landing page provider and near expriy food manager for resturants within MAARA, eventually expanding to be a national provider.
+
+## 1. Product Summary
+FreshForward's network
+
+## 2. Problem Being Solved
