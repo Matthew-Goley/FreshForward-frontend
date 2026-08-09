@@ -1,0 +1,126 @@
+import { snapPointsToLand } from './elevation'
+import { destinationPoint, haversineDistanceMeters } from './geo'
+
+export const DEFAULT_RADIUS_METERS = 5000
+export const MIN_RADIUS_METERS = 1609
+export const MAX_RADIUS_METERS = 16_093
+export const RADIUS_STEP_METERS = 805
+export const MAP_RADIUS_KEY = 'ff-map-radius-meters'
+
+export type NearbyStore = {
+  id: string
+  name: string
+  category: string
+  listingCount: number
+  lat: number
+  lng: number
+}
+
+const storeCatalog: { name: string; category: string; listingCount: number }[] = [
+  { name: "Trader Joe's", category: 'Grocery', listingCount: 3 },
+  { name: 'ALDI', category: 'Grocery', listingCount: 2 },
+  { name: 'Key Food', category: 'Grocery', listingCount: 3 },
+  { name: 'Chipotle Mexican Grill', category: 'Prepared Meals', listingCount: 2 },
+  { name: 'Local Harvest Co.', category: 'Grocery', listingCount: 2 },
+  { name: "Joe's Pizza", category: 'Prepared Meals', listingCount: 1 },
+  { name: 'Panda Express', category: 'Prepared Meals', listingCount: 2 },
+  { name: 'CookUnity', category: 'Prepared Meals', listingCount: 1 },
+  { name: 'Sweetgreen', category: 'Prepared Meals', listingCount: 2 },
+  { name: 'Whole Foods', category: 'Grocery', listingCount: 1 },
+  { name: 'Local Butcher Co.', category: 'Meat & Seafood', listingCount: 1 },
+  { name: 'Harbor Fish Market', category: 'Meat & Seafood', listingCount: 1 },
+  { name: 'Parisian Bakery', category: 'Bakery', listingCount: 1 },
+  { name: 'Wing Stop', category: 'Prepared Meals', listingCount: 1 },
+  { name: 'Local Deli', category: 'Prepared Meals', listingCount: 1 },
+  { name: 'Thai Kitchen', category: 'Prepared Meals', listingCount: 1 },
+  { name: 'Curry House', category: 'Prepared Meals', listingCount: 1 },
+  { name: 'Blue Bottle', category: 'Grocery', listingCount: 1 },
+  { name: 'Bodega Express', category: 'Convenience', listingCount: 1 },
+]
+
+export function slugifyStoreName(name: string) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+}
+
+export function getStoreNameFromSlug(slug: string): string | null {
+  const match = storeCatalog.find((store) => slugifyStoreName(store.name) === slug)
+  return match?.name ?? null
+}
+
+function slugify(name: string) {
+  return slugifyStoreName(name)
+}
+
+export function loadMapRadiusMeters(): number {
+  try {
+    const raw = localStorage.getItem(MAP_RADIUS_KEY)
+    if (!raw) return DEFAULT_RADIUS_METERS
+    const parsed = Number(raw)
+    if (!Number.isFinite(parsed)) return DEFAULT_RADIUS_METERS
+    return Math.min(MAX_RADIUS_METERS, Math.max(MIN_RADIUS_METERS, parsed))
+  } catch {
+    return DEFAULT_RADIUS_METERS
+  }
+}
+
+export function persistMapRadiusMeters(radiusMeters: number) {
+  localStorage.setItem(MAP_RADIUS_KEY, String(radiusMeters))
+}
+
+function candidateStorePoints(
+  centerLat: number,
+  centerLng: number,
+  radiusMeters: number,
+): { lat: number; lng: number }[] {
+  return storeCatalog.map((_, index) => {
+    const bearing = (index / storeCatalog.length) * 360 + 18
+    // Keep a little headroom so land-snapping toward center still stays in-radius
+    const distance = radiusMeters * (0.28 + ((index * 13) % 35) / 100)
+    return destinationPoint(centerLat, centerLng, distance, bearing)
+  })
+}
+
+function toStores(
+  points: { lat: number; lng: number }[],
+  centerLat: number,
+  centerLng: number,
+  radiusMeters: number,
+): NearbyStore[] {
+  return storeCatalog
+    .map((store, index) => ({
+      id: slugify(store.name),
+      name: store.name,
+      category: store.category,
+      listingCount: store.listingCount,
+      lat: points[index].lat,
+      lng: points[index].lng,
+    }))
+    .filter(
+      (store) =>
+        haversineDistanceMeters(centerLat, centerLng, store.lat, store.lng) <= radiusMeters + 1,
+    )
+}
+
+/** Sync mock pins — used immediately so the map never goes blank while snapping. */
+export function buildNearbyStoresSync(
+  centerLat: number,
+  centerLng: number,
+  radiusMeters: number,
+): NearbyStore[] {
+  return toStores(candidateStorePoints(centerLat, centerLng, radiusMeters), centerLat, centerLng, radiusMeters)
+}
+
+export async function buildNearbyStores(
+  centerLat: number,
+  centerLng: number,
+  radiusMeters: number,
+): Promise<NearbyStore[]> {
+  const candidates = candidateStorePoints(centerLat, centerLng, radiusMeters)
+  const snapped = await snapPointsToLand({ lat: centerLat, lng: centerLng }, candidates)
+  return toStores(snapped, centerLat, centerLng, radiusMeters)
+}
+
+export function formatRadiusMiles(meters: number) {
+  const miles = meters / 1609.34
+  return `${miles.toFixed(1)} mi`
+}

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode, type SVGProps } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import {
   DELIVERY_ADDRESS_KEY,
   SAVED_ADDRESSES_KEY,
@@ -9,6 +9,7 @@ import {
   searchAddressSuggestions,
 } from '../lib/address'
 import type { AddressSuggestion, SavedAddress } from '../lib/address'
+import { getStoreNameFromSlug, slugifyStoreName } from '../lib/nearbyStores'
 
 /* ─── Types ─── */
 
@@ -124,6 +125,15 @@ function IconDeals(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} {...props}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 3 14.5 8.5 20.5 9.3 16 13.4 17.2 19.4 12 16.6 6.8 19.4 8 13.4 3.5 9.3 9.5 8.5 12 3Z" />
+    </svg>
+  )
+}
+
+function IconMap(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 6.5 9 4.5 15 6.5 21 4.5v13l-6 2-6-2-6 2v-13Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5v13M15 6.5v13" />
     </svg>
   )
 }
@@ -862,10 +872,12 @@ function filterCatalogProducts(
   sidebar: string,
   pill: string | null,
   searchQuery = '',
+  storeSlug: string | null = null,
 ): Product[] {
   return catalogProducts.filter((product) => {
+    if (storeSlug && slugifyStoreName(product.vendor) !== storeSlug) return false
     if (!matchesProductSearch(product, searchQuery)) return false
-    if (sidebar !== 'home' && product.sidebarCategory !== sidebar) return false
+    if (!storeSlug && sidebar !== 'home' && product.sidebarCategory !== sidebar) return false
     if (pill && !product.pillCategories.includes(pill as PillCategoryId)) return false
     return true
   })
@@ -876,9 +888,23 @@ function buildProductSections(
   pill: string | null,
   itemsLimit: number,
   searchQuery = '',
+  storeSlug: string | null = null,
 ): ProductSection[] {
-  const filtered = filterCatalogProducts(sidebar, pill, searchQuery)
+  const filtered = filterCatalogProducts(sidebar, pill, searchQuery, storeSlug)
   const query = searchQuery.trim()
+
+  if (storeSlug) {
+    if (filtered.length === 0) return []
+    const storeName = getStoreNameFromSlug(storeSlug) ?? filtered[0]?.vendor ?? 'Store'
+    return [
+      {
+        id: 'search',
+        title: `${storeName} listings`,
+        products: filtered.slice(0, itemsLimit),
+        totalCount: filtered.length,
+      },
+    ]
+  }
 
   if (query) {
     if (filtered.length === 0) return []
@@ -913,11 +939,12 @@ function hasMoreProducts(
   pill: string | null,
   itemsLimit: number,
   searchQuery = '',
+  storeSlug: string | null = null,
 ): boolean {
-  const filtered = filterCatalogProducts(sidebar, pill, searchQuery)
+  const filtered = filterCatalogProducts(sidebar, pill, searchQuery, storeSlug)
   const query = searchQuery.trim()
 
-  if (query) return filtered.length > itemsLimit
+  if (storeSlug || query) return filtered.length > itemsLimit
 
   const categoryIds: SidebarCategoryId[] =
     sidebar === 'home' ? SECTION_ORDER : [sidebar as SidebarCategoryId]
@@ -1645,7 +1672,11 @@ export default function Browse() {
   const [currentLocation, setCurrentLocation] = useState('')
   const [pendingProductId, setPendingProductId] = useState<string | null>(null)
   const [searchParams] = useSearchParams()
+  const location = useLocation()
+  const mapActive = location.pathname === '/browse/map'
   const categoryParam = searchParams.get('category')
+  const storeParam = searchParams.get('store')
+  const activeStoreName = storeParam ? getStoreNameFromSlug(storeParam) : null
   const [activeSidebar, setActiveSidebar] = useState(
     categoryParam && sidebarItems.some((item) => item.id === categoryParam) ? categoryParam : 'home',
   )
@@ -1730,8 +1761,20 @@ export default function Browse() {
     localStorage.removeItem(SAVED_ADDRESSES_KEY)
   }, [savedAddresses])
 
-  const productSections = buildProductSections(activeSidebar, activePill, itemsLimit, searchQuery)
-  const showMoreAvailable = hasMoreProducts(activeSidebar, activePill, itemsLimit, searchQuery)
+  const productSections = buildProductSections(
+    activeSidebar,
+    activePill,
+    itemsLimit,
+    searchQuery,
+    storeParam,
+  )
+  const showMoreAvailable = hasMoreProducts(
+    activeSidebar,
+    activePill,
+    itemsLimit,
+    searchQuery,
+    storeParam,
+  )
 
   const handleSearchChange = (value: string) => {
     setSearchQuery(value)
@@ -2035,19 +2078,38 @@ export default function Browse() {
               const active = activeSidebar === item.id
               const Icon = item.icon
               return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => handleSidebarChange(item.id)}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium ${
-                    active
-                      ? 'bg-emerald-50 text-emerald-700'
-                      : `text-slate-700 ${textButtonHover}`
-                  }`}
-                >
-                  <Icon className={`h-5 w-5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-500'}`} />
-                  {item.label}
-                </button>
+                <div key={item.id}>
+                  <button
+                    type="button"
+                    onClick={() => handleSidebarChange(item.id)}
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium ${
+                      active
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : `text-slate-700 ${textButtonHover}`
+                    }`}
+                  >
+                    <Icon className={`h-5 w-5 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-500'}`} />
+                    {item.label}
+                  </button>
+                  {item.id === 'deals' && (
+                    <>
+                      <hr className="my-2 border-gray-200" />
+                      <Link
+                        to="/browse/map"
+                        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium ${
+                          mapActive
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : `text-slate-700 ${textButtonHover}`
+                        }`}
+                      >
+                        <IconMap
+                          className={`h-5 w-5 shrink-0 ${mapActive ? 'text-emerald-600' : 'text-slate-500'}`}
+                        />
+                        Map
+                      </Link>
+                    </>
+                  )}
+                </div>
               )
             })}
           </nav>
@@ -2056,6 +2118,25 @@ export default function Browse() {
           {/* Main content */}
           <main className="min-w-0 flex-1">
           <div className="px-4 py-5 sm:px-6 lg:px-8">
+            {storeParam && activeStoreName && (
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
+                    Map selection
+                  </p>
+                  <p className="text-base font-semibold text-slate-900">
+                    Listings from {activeStoreName}
+                  </p>
+                </div>
+                <Link
+                  to="/browse"
+                  className="rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+                >
+                  View all stores
+                </Link>
+              </div>
+            )}
+
             <CategoryPills
               pills={pills}
               activePill={activePill}
@@ -2065,12 +2146,18 @@ export default function Browse() {
             {productSections.length === 0 ? (
               <div className="mt-10 rounded-xl border border-gray-100 bg-gray-50 px-6 py-10 text-center">
                 <p className="text-base font-semibold text-slate-900">
-                  {searchQuery.trim() ? `No results for "${searchQuery.trim()}"` : 'No items found'}
+                  {storeParam && activeStoreName
+                    ? `No listings for ${activeStoreName}`
+                    : searchQuery.trim()
+                      ? `No results for "${searchQuery.trim()}"`
+                      : 'No items found'}
                 </p>
                 <p className="mt-1 text-sm text-slate-500">
-                  {searchQuery.trim()
-                    ? 'Try a different food name or restaurant.'
-                    : 'Try another category or clear your filters.'}
+                  {storeParam
+                    ? 'Try viewing all stores or pick another pin on the map.'
+                    : searchQuery.trim()
+                      ? 'Try a different food name or restaurant.'
+                      : 'Try another category or clear your filters.'}
                 </p>
               </div>
             ) : (

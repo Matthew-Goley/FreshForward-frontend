@@ -169,24 +169,58 @@ export async function searchAddressSuggestions(
 }
 
 export async function fetchCurrentAddress(): Promise<string> {
+  const { lat, lng } = await fetchCurrentCoordinates()
+  return reverseGeocode(lat, lng)
+}
+
+export async function fetchCurrentCoordinates(): Promise<{ lat: number; lng: number }> {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
       reject(new Error('Geolocation is not supported'))
       return
     }
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const address = await reverseGeocode(pos.coords.latitude, pos.coords.longitude)
-          resolve(address)
-        } catch (err) {
-          reject(err)
-        }
+      (pos) => {
+        resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude })
       },
       (err) => reject(err),
       { enableHighAccuracy: true, timeout: 12000 },
     )
   })
+}
+
+export async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
+  const trimmed = address.trim()
+  if (!trimmed) return null
+
+  const query = trimmed.includes(',') ? trimmed : `${trimmed}, United States`
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=us&addressdetails=1`,
+    { headers: { 'Accept-Language': 'en' } },
+  )
+  if (!res.ok) return null
+
+  const data = (await res.json()) as { lat: string; lon: string; display_name?: string }[]
+  if (data.length === 0) return null
+
+  const lat = Number(data[0].lat)
+  const lng = Number(data[0].lon)
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
+  if (Math.abs(lat) > 85 || Math.abs(lng) > 180) return null
+  if (Math.abs(lat) < 0.001 && Math.abs(lng) < 0.001) return null
+
+  return { lat, lng }
+}
+
+export async function resolveMapCenter(
+  deliveryAddress: string,
+): Promise<{ lat: number; lng: number }> {
+  const trimmed = deliveryAddress.trim()
+  if (trimmed) {
+    const geocoded = await geocodeAddress(trimmed)
+    if (geocoded) return geocoded
+  }
+  return fetchCurrentCoordinates()
 }
 
 export function saveAddressSelection(
